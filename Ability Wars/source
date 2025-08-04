@@ -1,0 +1,169 @@
+-- // Variables \\
+local players = game:GetService("Players")
+local localPlayer = players.LocalPlayer
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local camera = workspace.CurrentCamera
+local virtualInputManager = game:GetService("VirtualInputManager")
+    --> Distance Threshold
+    local distanceThreshold = 20
+    --> Click Aura
+    local clickingAuraToggle
+    --> Hitbox Expander
+    local expandRadius = 10
+    local hitboxExpanderToggle
+
+-- // Temp Variables \\
+local hitboxExpanderConnections = {}
+local bigMushroom
+local onAddedEvent
+local chamsToggle
+
+-- // FUnctions \\
+local function clickScreen()
+    local viewport = camera.ViewportSize
+    virtualInputManager:SendMouseButtonEvent(viewport.X / 2, viewport.Y / 2, 0, true, nil, 0)
+    virtualInputManager:SendMouseButtonEvent(viewport.X / 2, viewport.Y / 2, 0, false, nil, 0)
+end
+local function hitboxExtender(player)
+    local function expandHitbox()
+        local enemyRoot = (player.Character or player.CharacterAdded:Wait()) and player.Character:WaitForChild("HumanoidRootPart")
+        if enemyRoot then
+            enemyRoot.Size = Vector3.new(expandRadius, expandRadius, expandRadius)
+        end
+    end
+    table.insert(hitboxExpanderConnections, player.CharacterAdded:Connect(function()
+        expandHitbox()
+    end))
+    expandHitbox()
+end
+local function updateHitboxes(call)
+    if call == false then
+        for i, connection in pairs(hitboxExpanderConnections) do
+            connection:Disconnect()
+        end
+        for i, player in pairs(players:GetPlayers()) do
+            local playerRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            if playerRoot then
+                playerRoot.Size = Vector3.new(2, 2, 1)
+            end
+        end
+    else
+        for i, player in pairs(players:GetPlayers()) do
+            if player == localPlayer then continue end
+            hitboxExtender(player)
+        end
+    end
+end
+
+-- // UI Setup \\
+local library = loadstring(game:HttpGet("https://pastefy.app/nouhCgKQ/raw"))()
+local window = library.Window()
+local combatTab = window.Tab("Combat")
+local combatSection = combatTab.Section("Aura")
+combatSection.Toggle("Click Aura 🖱️", function(call)
+    clickingAuraToggle = call
+end)
+combatSection.Slider("Distance Threshold 🛫", 10, 40, 20, function(value)
+    distanceThreshold = value
+end)
+local hitboxSection = combatTab.Section("Hitboxes")
+hitboxSection.Toggle("Hitbox Expander 💢", function(call)
+    hitboxExpanderToggle = call
+    updateHitboxes(call)
+end)
+hitboxSection.Slider("Expand Radius 👈", 10, 40, 20, function(value)
+    expandRadius = value
+    if hitboxExpanderToggle == true then
+        updateHitboxes(false)
+        updateHitboxes(true)
+    end
+end)
+local mushroomSection = combatTab.Section("Mushroom")
+mushroomSection.Toggle("Spam Big Mushroom 🍄", function(call)
+    bigMushroom = call
+    task.spawn(function()
+        while bigMushroom and task.wait() do
+            replicatedStorage["Remote Events"].BigMushroomEvent:FireServer()
+        end
+    end)
+end)
+local blatantTab = window.Tab("Blatant")
+local blatantSection = blatantTab.Section("Blatant")
+blatantSection.Toggle("Anti Void 💨", function(call)
+    if call == false then
+        workspace.__ANTIVOID:Destroy()
+    else
+        local antiVoidPart = Instance.new("Part", workspace)
+        antiVoidPart.Size = Vector3.new(2048, 4, 2048)
+        antiVoidPart.Transparency = 0.5
+        antiVoidPart.Anchored = true
+        antiVoidPart.Name = "__ANTIVOID"
+        antiVoidPart.Position = Vector3.new(0, 1.5, 0)
+    end
+end)
+blatantSection.Toggle("Auto Respawn 🚪", function(call)
+    if call == false then
+        onAddedEvent:Disconnect()
+    else
+        onAddedEvent = localPlayer.CharacterAdded:Connect(function()
+            while not (localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")) do
+                task.wait()
+            end
+            localPlayer.Character:SetPrimaryPartCFrame(workspace.Portals["Arena Frame"].Portal.CFrame)
+        end)
+    end
+end)
+local visualTab = window.Tab("Visuals")
+local chamsSection = visualTab.Section("Chams")
+chamsSection.Toggle("Chams 🖌️", function(call)
+    chamsToggle = call
+    task.spawn(function()
+        while chamsToggle and task.wait() do
+            for i, player in pairs(players:GetPlayers()) do
+                local enemyChar = player.Character
+                if player == localPlayer or (enemyChar and enemyChar:FindFirstChild("HumanoidRootPart")) == nil then continue end
+                if enemyChar:FindFirstChild("_chams") == nil then
+                    local chamsHighlight = Instance.new("Highlight", enemyChar)
+                    chamsHighlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    chamsHighlight.FillTransparency = 1
+                    chamsHighlight.OutlineTransparency = 0
+                    chamsHighlight.OutlineColor = Color3.fromRGB(211, 0, 0)
+                end
+            end
+        end
+    end)
+    if call == false then
+        for i, player in pairs(players:GetPlayers()) do
+            local enemyChar = player.Character
+            if player == localPlayer or (enemyChar and enemyChar:FindFirstChild("HumanoidRootPart")) == nil then continue end
+            if enemyChar:FindFirstChild("_chams") ~= nil then
+                enemyChar._chams:Destroy()
+            end
+        end
+    end
+end)
+
+-- // Main Script \\
+task.spawn(function()
+    repeat
+        local root = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            local enemy
+            for i, player in pairs(players:GetPlayers()) do
+                if player == localPlayer or (player:FindFirstChild("leaderstats") and (player.leaderstats.Ability.Value == "Butter" or player.leaderstats.Ability.Value == "Spectator")) then
+                    continue
+                end
+                local enemyRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                if enemyRoot then
+                    local magnitude = (root.Position - enemyRoot.Position).magnitude
+                    if magnitude <= distanceThreshold then
+                        if clickingAuraToggle then
+                            clickScreen()
+                        end
+                    end
+                end
+            end
+        end
+        wait(math.random(9, 20) / 100)
+    until (nil)
+end)
