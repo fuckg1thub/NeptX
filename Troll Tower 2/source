@@ -1,0 +1,143 @@
+-- // UI Setup \\
+local library = loadstring(game:HttpGet("https://pastefy.app/nouhCgKQ/raw"))()
+local window = library.Window()
+
+-- // Functions \\
+local players = game:GetService("Players")
+local localPlayer = players.LocalPlayer
+
+local function findSlapToop()
+    local char = localPlayer.Character
+    if not char then return end
+
+    local slap = char:FindFirstChild("FreeSlap") or localPlayer.Backpack.FreeSlap
+    return slap
+end
+
+local function slapPlayer(player, mode)
+    local slapTool = findSlapToop()
+    if (player == localPlayer) or (not slapTool) or (player.Character == nil) then return end
+
+    local r = math.random(-9, 9)
+    local remoteArguments = {
+        "slash",
+        player.Character,
+        mode == "kill" and Vector3.new(0,  -math.huge, 0) or mode == "fling" and Vector3.new(50, 25, 10) or Vector3.new(r, r, r)
+    }
+    slapTool.Event:FireServer(unpack(remoteArguments))
+end
+
+-- // Temp Variables \\
+local loopKill
+local loopSlap
+local loopFling
+local auraKill
+local auraSlap
+local auraFling
+local auraRange = 20
+
+-- // UI Setup (Features) \\
+local slapTab = window.Tab("Exploit")
+local slapSection = slapTab.Section("Buttons")
+slapSection.Button("Kill All Once", function()
+    for i, victim in pairs(players:GetPlayers()) do
+        pcall(slapPlayer, victim, "kill")
+    end
+end)
+slapSection.Button("Slap All Once", function()
+    for i, victim in pairs(players:GetPlayers()) do
+        pcall(slapPlayer, victim)
+    end
+end)
+slapSection.Button("Fling All Once", function()
+    for i, victim in pairs(players:GetPlayers()) do
+        pcall(slapPlayer, victim, "fling")
+    end
+end)
+local loopsSection = slapTab.Section("Loops Slap")
+loopsSection.Toggle("Loop Kill All", function(call)
+    loopKill = call
+    task.spawn(function()
+        while loopKill and task.wait(0.05) do
+            for i, victim in pairs(players:GetPlayers()) do
+                pcall(slapPlayer, victim, "kill")
+            end
+        end
+    end)
+end)
+loopsSection.Toggle("Loop Slap All", function(call)
+    loopSlap = call
+    task.spawn(function()
+        while loopSlap and task.wait(0.05) do
+            for i, victim in pairs(players:GetPlayers()) do
+                pcall(slapPlayer, victim)
+            end
+        end
+    end)
+end)
+loopsSection.Toggle("Loop Fling All", function(call)
+    loopFling = call
+    task.spawn(function()
+        while loopFling and task.wait(0.05) do
+            for i, victim in pairs(players:GetPlayers()) do
+                pcall(slapPlayer, victim, "fling")
+            end
+        end
+    end)
+end)
+local auraTab = window.Tab("Auras")
+local auraSection = auraTab.Section("Slap Auras")
+auraSection.Toggle("Kill Aura", function(call)
+    auraKill = call
+    task.spawn(function()
+        while auraKill and task.wait(0.05) do
+            for i, victim in pairs(players:GetPlayers()) do
+                local enemyRoot = victim.Character and victim.Character:FindFirstChild("HumanoidRootPart")
+                local root = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if enemyRoot and root and victim ~= localPlayer then
+                    local magnitude = (enemyRoot.Position - root.Position).magnitude
+                    if magnitude <= auraRange then
+                        pcall(slapPlayer, victim, "kill")
+                    end
+                end
+            end
+        end
+    end)
+end)
+auraSection.Toggle("Slap Aura", function(call)
+    auraSlap = call
+    task.spawn(function()
+        while auraSlap and task.wait(0.05) do
+            for i, victim in pairs(players:GetPlayers()) do
+                local enemyRoot = victim.Character and victim.Character:FindFirstChild("HumanoidRootPart")
+                local root = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if enemyRoot and root and victim ~= localPlayer then
+                    local magnitude = (enemyRoot.Position - root.Position).magnitude
+                    if magnitude <= auraRange then
+                        pcall(slapPlayer, victim)
+                    end
+                end
+            end
+        end
+    end)
+end)
+auraSection.Toggle("Fling Aura", function(call)
+    auraFling = call
+    task.spawn(function()
+        while auraFling and task.wait(0.05) do
+            for i, victim in pairs(players:GetPlayers()) do
+                local enemyRoot = victim.Character and victim.Character:FindFirstChild("HumanoidRootPart")
+                local root = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if enemyRoot and root and victim ~= localPlayer then
+                    local magnitude = (enemyRoot.Position - root.Position).magnitude
+                    if magnitude <= auraRange then
+                        pcall(slapPlayer, victim, "fling")
+                    end
+                end
+            end
+        end
+    end)
+end)
+auraSection.Slider("Distance Threshold", 5, 50, 20, function(val)
+    auraRange = val
+end)
