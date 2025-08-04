@@ -1,0 +1,320 @@
+-- // Variables \\
+local library = loadstring(game:HttpGet("https://pastefy.app/nouhCgKQ/raw"))()
+local players = game:GetService("Players")
+local tweenService = game:GetService("TweenService")
+local localPlayer = players.LocalPlayer
+    --> Auto Buy Container
+    local selectedContainer = "Junk"
+    local autoBuyContainer = false
+    --> Auto Farm COntainer
+    local autoFarmContainers = false
+    --> Auto Collect Items
+    local autoCollectItems
+    --> Auto Sell Items
+    local autoSellItems
+    
+-- // Temp Variables \\
+local localPlot
+local containerMenuButton
+local containerSelectButton
+local fuckingIgnore = {}
+local itemCache
+local isTweening = false
+local inventoryFull = false
+local tweeningSpeed = 30
+local farmNotBuy = false
+local shouldBuy = false
+
+-- // Functions \\
+local function getCurrentMoney ()
+    local value = localPlayer.PlayerGui.CurrencyUI.MainFrame.StatsFrame.Money.Amount.Text:gsub(",", "")
+    return tonumber(value)
+end
+
+local function tween (position)
+    local root = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not root then return 'no root' end
+    isTweening = true
+
+    local tween = tweenService:Create(root, TweenInfo.new((root.position - position).magnitude / tweeningSpeed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(position, position + root.CFrame.LookVector)})
+    tween:Play()
+    tween.Completed:wait()
+    isTweening = false
+    return "success"
+end
+
+local function getPlot ()
+    local plots = workspace.Gameplay.Plots
+    for i = 1, #plots:GetChildren() do
+        if plots:FindFirstChild(tostring(i)) == nil then continue end
+        local text = plots[tostring(i)].PlotLogic.PlotNameSign.PlayerInfoSign.PlayerNameSign.MainFrame.NameLabel.Text
+        if text == `{localPlayer.Name}'s Market` then
+            return plots[tostring(i)]
+        end
+    end
+end
+
+local function getMaxContainers ()
+    local badColor = "0 1 0 0 0 1 1 0 0 0 "
+    local slots = 0
+    for i, v in pairs(localPlot.PlotLogic.ContainerSlots:GetChildren()) do
+        if tostring(v.LeftBeam.Color) ~= badColor then
+            slots += 1
+        end
+    end
+    return slots
+end
+
+local function sell()
+    local notification = localPlayer.PlayerGui.ScreenGui.NotificationFrame:FindFirstChild("Notification")
+    if not autoSellItems then
+        return false
+    end
+    if notification and notification.NotificationText.Text:find("INVENTORY IS FULL") then
+        inventoryFull = true
+        local tw = tween(localPlot.PlotDecor.House.Part.Position + Vector3.new(0, 5, 0))
+        if tw == "no root" then
+            return tw
+        elseif tw == "success" then
+            firesignal(localPlayer.PlayerGui.BackpackGui.Backpack.Hotbar.DropAll.MouseButton1Click)
+            task.wait(1.5)
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Sold",
+                Text = "Your all items have been sold",
+                Duration = 10
+            })
+            inventoryFull = false
+        end
+    else
+        return false
+    end
+end
+
+-- // UI Setup \\
+local window = library.Window()
+local autofarmTab = window.Tab("Autofarm")
+local autoBuySection = autofarmTab.Section("Auto Buy")
+autoBuySection.Toggle("Auto Buy Container", function (callback)
+    autoBuyContainer = callback
+end)
+local autoContainerSection = autofarmTab.Section("Auto Container")
+autoContainerSection.Toggle("Auto Farm Container", function (callback)
+    autoFarmContainers = callback
+end)
+autoContainerSection.Toggle("Pick Up Items", function (callback)
+    autoCollectItems = callback
+end)
+autoContainerSection.Toggle("Sell Picked Up Items", function (callback)
+    autoSellItems = callback
+end)
+local autofarmSettingsSection = autofarmTab.Section("Select")
+local settingsTab = window.Tab("Settings")
+local settingsSection = settingsTab.Section("Settings")
+settingsSection.Slider("Farming Speed", 10, 120, 30, function (value)
+    tweeningSpeed = value
+end)
+--[[local debugTab = window.Tab("Debug")
+local debugSection = debugTab.Section("This is for debugging!! You wont find any features here")
+debugSection.Button("containerholder children count", function ()
+    print(#localPlot.PlotLogic.ContainerHolder:GetChildren())
+end)
+debugSection.Button("getMaxContainers func", function ()
+    print(getMaxContainers())
+end)
+debugSection.Button("money count", function ()
+    print(getCurrentMoney())
+end)
+debugSection.Button("variables", function ()
+    print(selectedContainer, autoBuyContainer, autoFarmContainers)
+end)]]
+
+-- // Main Script \\
+localPlot = getPlot()
+itemCache = localPlot.PlotLogic.ItemCache
+local containerMeta = {
+    Junk=100,Scratched=200,Sealed=700,
+    Military=3_000,Metal=10_000,Frozen=25_000,
+    Lava=50_000,Corrupted=100_000,Stormed=250_000,
+    Lightning=500_000,Infernal=750_000,
+    Mystic=1_500_000,Glitched=5_000_000,
+    Astral=10_000_000,Dream=25_000_000,
+    Celestial=50_000_000,Fire=100_000_000,
+    Golden=250_000_000,Diamond=500_000_000,
+    Emerald=2_500_000_000,Ruby=10_000_000_000,
+    Sapphire=75_000_000_000,
+    Space=150_000_000_000,
+    ["Deep Sapce"]=500_000_000_000,
+    Vortex=1_000_000_000_000,
+    ["Black Hole"]=2_500_000_000_000
+}
+local rawTable = {}
+for i, v in pairs(containerMeta) do
+    table.insert(rawTable, i)
+end
+autofarmSettingsSection.Dropdown("Container Name", rawTable, "Junk", function (val)
+    selectedContainer = val
+end)
+task.spawn(function ()
+    repeat
+        if localPlayer.PlayerGui.MenusUI:FindFirstChild("StarterPack") then
+            firesignal(localPlayer.PlayerGui.MenusUI:FindFirstChild("StarterPack").CloseButton.MouseButton1Click)
+        end
+        if #localPlot.PlotLogic.ContainerHolder:GetChildren() ~= 0 then
+            if autoFarmContainers and not inventoryFull then
+                for i, v in pairs(localPlot.PlotLogic.ContainerHolder:GetChildren()) do
+                    local proximityPrompt = v:FindFirstChild("ContainerLogic") and v:FindFirstChild("ContainerLogic").DoorProximityHolder
+                    if proximityPrompt and proximityPrompt:FindFirstChild("ProximityPrompt") == nil then
+                        for i, item in pairs(itemCache:GetChildren()) do
+                            if not item:FindFirstChild("PrimaryPart") then continue end
+                            if not (function()
+                                local itemPosition = item:FindFirstChild("PrimaryPart").Position
+                                local cf, size = v:GetBoundingBox()
+                                local rel = cf:PointToObjectSpace(itemPosition)
+                                local half = size * 0.5
+                                return ((itemPosition * Vector3.new(1,0,1)) - (v.Container.Position * Vector3.new(1,0,1))).magnitude <= 31 and (math.abs(rel.X) <= half.X and math.abs(rel.Z) <= half.Z)
+                            end)() then continue end
+                            if not item:FindFirstChild("PrimaryPart") then continue end
+                            local pos = item.WorldPivot.Position
+                            tween(Vector3.new(pos.X, localPlayer.Character.HumanoidRootPart.Position.Y, pos.Z))
+                            if autoCollectItems and autoFarmContainers then
+                                fireproximityprompt(item.ProximityPrompt)
+                            end
+                            local sold = sell()
+                            if sold ~= false or sold == "no root" then
+                                break
+                            end
+                        end
+                    else
+                        task.wait(1)
+                        local tw = tween(proximityPrompt.Position + Vector3.new(0, 12, 0))
+                        if tw == "no root" then
+                            break
+                        elseif tw == "success" then
+                            fireproximityprompt(proximityPrompt.ProximityPrompt)
+                            game:GetService("StarterGui"):SetCore("SendNotification", {
+                                Title = "Opened Container",
+                                Text = `Container #{i} was opened.`,
+                                Duration = 10
+                            })
+                            if autoCollectItems then
+                                local tw = tween(v.WorldPivot.Position)
+                                if tw == "no root" then
+                                    break
+                                elseif tw == "success" then
+                                    task.wait(1)
+                                    for i, item in pairs(itemCache:GetChildren()) do
+                                        if not item:FindFirstChild("PrimaryPart") then continue end
+                                        local isInsideOfContainer = (function()
+                                            local itemPosition = item:FindFirstChild("PrimaryPart").Position
+                                            local cf, size = v:GetBoundingBox()
+                                            local rel = cf:PointToObjectSpace(itemPosition)
+                                            local half = size * 0.5
+                                            return ((itemPosition * Vector3.new(1,0,1)) - (v.Container.Position * Vector3.new(1,0,1))).magnitude <= 31 and (math.abs(rel.X) <= half.X and math.abs(rel.Y) <= half.Y and math.abs(rel.Z) <= half.Z)
+                                        end)();
+                                        --print(isInsideOfContainer, item)
+                                        if isInsideOfContainer then
+                                            local pos = item.WorldPivot.Position
+                                            tween(Vector3.new(pos.X, localPlayer.Character.HumanoidRootPart.Position.Y, pos.Z))
+                                            if autoCollectItems and autoFarmContainers then
+                                                fireproximityprompt(item.ProximityPrompt)
+                                            end
+                                            local sold = sell()
+                                            if sold ~= false or sold == "no root" then
+                                                break
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        else
+            local money = getCurrentMoney()
+            if autoBuyContainer and money >= containerMeta[selectedContainer] then
+                local successfullyBought = false
+                game:GetService("StarterGui"):SetCore("SendNotification", {
+                    Title = "Buying ...",
+                    Text = "About to buy a container",
+                    Duration = 10
+                })
+                task.wait(2.5)
+                repeat
+                    local tw = tween(localPlot.PlotDecor.ComputerTable.Model.WorldPivot.Position + Vector3.new(0, 5, 0))
+                    if tw == "no root" then
+                        break
+                    elseif tw == "success" then
+                        fireproximityprompt(localPlot.PlotLogic.ComputerSystem.ComputerProximityHolder.ProximityPrompt)
+                        task.wait(0.1)
+                        repeat
+                            task.wait(0.1)
+                            for i, v in pairs(localPlayer.PlayerGui:GetDescendants()) do
+                                if not v:IsA("TextLabel") then continue end
+                                if v.Text ~= "ContainerEx" then continue end
+                                containerMenuButton = v.Parent.Parent.Parent
+                                break
+                            end
+                        until containerMenuButton or not autoBuyContainer
+                        if autoBuyContainer then
+                            firesignal(containerMenuButton.MouseButton1Click)
+                            repeat
+                                task.wait(0.1)
+                                for i, v in pairs(localPlayer.PlayerGui:GetDescendants()) do
+                                    if not v:IsA("TextLabel") then continue end
+                                    if v.Text ~= (selectedContainer .. " Container") then continue end
+                                    if v:FindFirstAncestor("InfoHolder", true) then continue end
+                                    containerSelectButton = v.Parent.Parent
+                                    break
+                                end
+                            until containerMenuButton or not autoBuyContainer
+                            if autoBuyContainer then
+                                firesignal(containerSelectButton.MouseButton1Click)
+                                task.wait(0.1)
+                                local lol = getMaxContainers() - #localPlot.PlotLogic.ContainerHolder:GetChildren()
+                                for i = 1, lol do
+                                    firesignal(localPlayer.PlayerGui.MenusUI.ContainerShop:FindFirstChild("RegularButton", true).MouseButton1Click)
+                                    task.wait(0.1)
+                                end
+                                pcall(function ()
+                                    firesignal(localPlayer.PlayerGui.MenusUI.ContainerShop.ButtonHolder.CloseButton.MouseButton1Click)
+                                end)
+                                local originalAmount = #localPlot.PlotLogic.ContainerHolder:GetChildren()
+                                game:GetService("StarterGui"):SetCore("SendNotification", {
+                                    Title = "Waiting ...",
+                                    Text = "Waiting for the container to arrive!",
+                                    Duration = 10
+                                })
+                                repeat task.wait(1) print(originalAmount, #localPlot.PlotLogic.ContainerHolder:GetChildren())until #localPlot.PlotLogic.ContainerHolder:GetChildren() == getMaxContainers()
+                                successfullyBought = true
+                            end
+                        end
+                    end
+                    task.wait()
+                until successfullyBought or not autoBuyContainer
+            end
+        end
+        wait()
+    until (nil)
+end)
+
+-- // Tweening Sutff \\
+task.spawn(function ()
+    while true do
+        if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") and isTweening then
+            localPlayer.Character.HumanoidRootPart.Velocity = Vector3.new()
+            for i, v in pairs(localPlayer.Character:GetChildren()) do
+                if v:IsA("BasePart") then
+                    v.CanCollide = false
+                end
+            end
+        elseif localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") and not isTweening then
+            for i, v in pairs(localPlayer.Character:GetChildren()) do
+                if v:IsA("BasePart") then
+                    v.CanCollide = true
+                end
+            end
+        end
+        task.wait()
+    end
+end)
