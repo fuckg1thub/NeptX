@@ -1,4 +1,4 @@
-loadstring(game:HttpGet("https://pastefy.app/kkTm4MOG/raw"))()
+loadstring(game:HttpGet("https://pastefy.app/uqQKQkAR/raw"))()
 
 -- doesnt look like my other scripts at all because i hella rushed it
 -- yes, this is my code not pasted 😭
