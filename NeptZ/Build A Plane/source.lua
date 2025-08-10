@@ -1,3 +1,4 @@
+-- doesnt look like my other scripts at all because i hella rushed it
 -- yes, this is my code not pasted 😭
 local blocksInfo = require(game:GetService("ReplicatedStorage").Modules.Utilities.BlocksUtil).BlockInfo
 _G.originalz = _G.originalz or blocksInfo
