@@ -1,4 +1,4 @@
-loadstring(game:HttpGet("https://pastefy.app/kkTm4MOG/raw"))()
+loadstring(game:HttpGet("https://pastefy.app/uqQKQkAR/raw"))()
 
 -- // Variables \\
 local library = loadstring(game:HttpGet("https://pastefy.app/nouhCgKQ/raw"))()
