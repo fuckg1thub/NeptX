@@ -21,47 +21,59 @@ local function getPlane()
     end
 end
 
-local library = loadstring(game:HttpGet("https://pastefy.app/15xX79gr/raw"))()
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/assets/refs/heads/main/lib.lua"))()
 local window = library.Window("NeptZ", "Plane")
 local blocksTab = window.Tab("Blocks")
 local mainsection = blocksTab.Section("Blocks")
 mainsection.Toggle("Infinite Fuel", function(call)
     if call == false then
-        modifyBlockData("fuel_1", "Fuel", 5)
-        modifyBlockData("fuel_2", "Fuel", 10)
-        modifyBlockData("fuel_3", "Fuel", 15)
-    else
         modifyBlockData("fuel_1", "Fuel", getBlockData("fuel_1", "Fuel"))
         modifyBlockData("fuel_3", "Fuel", getBlockData("fuel_2", "Fuel"))
         modifyBlockData("fuel_3", "Fuel", getBlockData("fuel_3", "Fuel"))
+    else
+        modifyBlockData("fuel_1", "Fuel", 9e9)
+        modifyBlockData("fuel_3", "Fuel", 9e9)
+        modifyBlockData("fuel_3", "Fuel", 9e9)
     end
 end)
 mainsection.Toggle("Better Wings", function(call)
     if call == false then
-        modifyBlockData("wing_1", "Lift", 4)
-        modifyBlockData("wing_2", "Lift", 8)
-        modifyBlockData("wing_3", "Lift", 10)
-        modifyBlockData("wing_3", "Lift", getBlockData("wing_blood", "Lift"))
-    else
         modifyBlockData("wing_1", "Lift", getBlockData("wing_1", "Lift"))
         modifyBlockData("wing_2", "Lift", getBlockData("wing_2", "Lift"))
         modifyBlockData("wing_3", "Lift", getBlockData("wing_3", "Lift"))
         modifyBlockData("wing_blood", "Lift", getBlockData("wing_blood", "Lift"))
+    else
+        modifyBlockData("wing_1", "Lift", 20)
+        modifyBlockData("wing_2", "Lift", 20)
+        modifyBlockData("wing_3", "Lift", 20)
+        modifyBlockData("wing_blood", "Lift", 20)
     end
 end)
+_G.propeler2 = nil
 mainsection.Toggle("Better Propellors", function(call)
+    _G.propeler = call
     if call == false then
-        modifyBlockData("propeller_0", "Force", 4)
-        modifyBlockData("propeller_1", "Force", 20)
-        modifyBlockData("propeller_2", "Force", 35)
-        modifyBlockData("propeller_3", "Force", 42)
-        modifyBlockData("propeller_blood", "Force", 50)
+        modifyBlockData("propeller_0", "Force", getBlockData("propeller_0", "Force"))
+        modifyBlockData("propeller_1", "Force", getBlockData("propeller_1", "Force"))
+        modifyBlockData("propeller_2", "Force", getBlockData("propeller_2", "Force"))
+        modifyBlockData("propeller_3", "Force", getBlockData("propeller_3", "Force"))
+        modifyBlockData("propeller_blood", "Force", getBlockData("propeller_blood", "Force"))
     else
-        modifyBlockData("propeller_0", "Force", 150)
-        modifyBlockData("propeller_1", "Force", 150)
-        modifyBlockData("propeller_2", "Force", 150)
-        modifyBlockData("propeller_3", "Force", 150)
-        modifyBlockData("propeller_blood", "Force", 150)
+        modifyBlockData("propeller_0", "Force", _G.propeler2 or 150)
+        modifyBlockData("propeller_1", "Force", _G.propeler2 or 150)
+        modifyBlockData("propeller_2", "Force", _G.propeler2 or 150)
+        modifyBlockData("propeller_3", "Force", _G.propeler2 or 150)
+        modifyBlockData("propeller_blood", "Force", _G.propeler2 or 150)
+    end
+end)
+mainsection.Slider("Propellor Speed", 0, 1, 300, function (v)
+    _G.propeler2 = v
+    if _G.propeler then
+        modifyBlockData("propeller_0", "Force", _G.propeler2)
+        modifyBlockData("propeller_1", "Force", _G.propeler2)
+        modifyBlockData("propeller_2", "Force", _G.propeler2)
+        modifyBlockData("propeller_3", "Force", _G.propeler2)
+        modifyBlockData("propeller_blood", "Force", _G.propeler2)
     end
 end)
 local farmTab = window.Tab("Auto Farm")
