@@ -1,4 +1,4 @@
--- fixy some bug with auto generator yes
+-- actually fixed auto generator this time
 
 _G.yeaican = false
 if not _G.yeaican then
@@ -56,40 +56,31 @@ generatorsSection.Toggle("Generators ESP", function(bool)
 end)
 generatorsSection.Toggle("Instant Generator", function(bool)
     _G.instantGenerator = bool
-    if workspace.Map.Ingame:FindFirstChild("Map") and bool then
-        game.StarterGui:SetCore("SendNotification",
-                            { Title = "warning", Text = "this will not work until the next round", Duration = 9 })
-    end
-end)
-
-workspace.Map.Ingame.ChildAdded:Connect(function(v)
-    if not _G.instantGenerator then return end
-    if v.Name ~= "Map" then return end
-    kasjdkasjda = false
-    wait(0.2)
-    pcall(function()
-        for i, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-            if not generatorsDid[v] and v.Name == "Generator" then
-                generatorsDid[v] = true
-                local old; old = hookfunction(getsenv(v.Scripts.Client).toggleGeneratorState, function(a)
-                    print("wahr", a)
-                    if a ~= "enter" then return old("leave") end
-                    old("enter")
-                    for i = 1, 4 do
-                        game.StarterGui:SetCore("SendNotification",
-                            { Title = "generator", Text = tostring(i), Duration = 9 })
-                        v.Remotes.RE:FireServer()
-                        task.wait(2.5)
+    task.spawn(function()
+        while _G.instantGenerator and task.wait() do
+            if workspace.Map.Ingame:FindFirstChild("Map") then
+                pcall(function()
+                    for i, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+                        if not generatorsDid[v] and v.Name == "Generator" then
+                            generatorsDid[v] = true
+                            local old; old = hookfunction(getsenv(v.Scripts.Client).toggleGeneratorState, function(a)
+                                print("wahr", a)
+                                if a ~= "enter" then return old("leave") end
+                                old("enter")
+                                for i = 1, 4 do
+                                    game.StarterGui:SetCore("SendNotification",
+                                        { Title = "generator", Text = tostring(i), Duration = 9 })
+                                    v.Remotes.RE:FireServer()
+                                    task.wait(2.5)
+                                end
+                                return ""
+                            end)
+                        end
                     end
-                    return ""
                 end)
             end
         end
     end)
-end)
-workspace.Map.Ingame.ChildRemoved:Connect(function (v)
-    if v.Name ~= "Map" then return end
-    kasjdkasjda = true
 end)
 
 killersSection.Toggle("Killer ESP", function(bool)
