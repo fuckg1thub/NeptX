@@ -2,9 +2,9 @@ _G.yeaican = false
 if not _G.yeaican then
     if _G.ialreadyloadedit then
         print("bro, fuck no")
+		return
     else
         _G.ialreadyloadedit = true
-        
     end
 end
 
