@@ -1,3 +1,5 @@
+-- fixy some bug with auto generator yes
+
 _G.yeaican = false
 if not _G.yeaican then
     if _G.ialreadyloadedit then
@@ -54,28 +56,9 @@ generatorsSection.Toggle("Generators ESP", function(bool)
 end)
 generatorsSection.Toggle("Instant Generator", function(bool)
     _G.instantGenerator = bool
-    if _G.instantGenerator and kasjdkasjda then
-        pcall(function()
-            local mao = workspace.Map.Ingame:WaitForChild("Map")
-            for i, v in pairs(mao:GetChildren()) do
-                if not generatorsDid[v] and v.Name == "Generator" then
-                    generatorsDid[v] = true
-                    local old; old = hookfunction(getsenv(v.Scripts.Client).toggleGeneratorState, function(a)
-                        if not _G.instantGenerator then return old(a) end
-                        print("wahr", a)
-                        if a ~= "enter" then return old("leave") end
-                        old("enter")
-                        for i = 1, 4 do
-                            game.StarterGui:SetCore("SendNotification",
-                                { Title = "generator", Text = tostring(i), Duration = 9 })
-                            v.Remotes.RE:FireServer()
-                            task.wait(2.5)
-                        end
-                        return ""
-                    end)
-                end
-            end 
-        end)
+    if workspace.Map.Ingame:FindFirstChild("Map") and bool then
+        game.StarterGui:SetCore("SendNotification",
+                            { Title = "warning", Text = "this will not work until the next round", Duration = 9 })
     end
 end)
 
