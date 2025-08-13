@@ -1,6 +1,6 @@
--- actually fixed auto generator this time
+-- switched the ui for something cleaner
 
-_G.yeaican = false
+_G.yeaican = true
 if not _G.yeaican then
     if _G.ialreadyloadedit then
         print("bro, fuck no")
@@ -10,13 +10,13 @@ if not _G.yeaican then
     end
 end
 
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/assets/refs/heads/main/lib.lua"))()
-local window = library.Window("NeptZ", "Forsaken")
-local mainTab = window.Tab("Main")
-local generatorsSection = mainTab.Section("Generators")
-local killersSection = mainTab.Section("Killers")
-local survivorsSection = mainTab.Section("Survivors")
-local itemsSection = mainTab.Section("Items")
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/Fluent-Inspired-UI/refs/heads/main/fiui.luau"))()
+local window = library.Window("NXP hub (V1)", "Forsaken", "rbxassetid://118689160394652", false, Color3.fromRGB(150, 63, 204))
+local mainTab = window:Tab("Main", "rbxassetid://101966922795157")
+local generatorsSection = mainTab:AddSection("Generators")
+local killersSection = mainTab:AddSection("Killers")
+local survivorsSection = mainTab:AddSection("Survivors")
+local itemsSection = mainTab:AddSection("Items")
 
 local generatorsDid = {}
 
@@ -158,15 +158,15 @@ itemsSection.Toggle("Items ESP", function(bool)
         end
     end)
 end)
-local playerTab = window.Tab("Local Player")
-playerTab.Section("Stamina").Button("Infinite Stamina", function()
+local playerTab = window:Tab("Local Player", "rbxassetid://73140121358767")
+playerTab:AddSection("Stamina").Button("Infinite Stamina", function()
     require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting).DefaultConfig.MaxStamina = 9999
     require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting).DefaultConfig.StaminaLoss = 0
     game.StarterGui:SetCore("SendNotification",
         { Title = "warning", Text = "this effect wont apply until next round, but you only have to press it once this entire session", Duration = 9 })
 end)
 
-local speedSection = playerTab.Section("Speed")
+local speedSection = playerTab:AddSection("Speed")
 local yeahvariable = 0
 speedSection.Slider("Speed (Bypass)", 16, 16, 100, function (s)
     yeahvariable = s
@@ -184,7 +184,7 @@ speedSection.Toggle("Speed Toggle", function (s)
         end
     end)
 end)
-playerTab.Section("Noclip").Toggle("Enable Noclip [⚠️]", function (s)
+playerTab:AddSection("Noclip").Toggle("Enable Noclip [⚠️]", function (s)
     if s == true then
          game.StarterGui:SetCore("SendNotification",
         { Title = "KICK WARNING", Text = "you WILL get kicked if you are inside a wall for more than a second! only use for small shortcuts", Duration = 9 })
@@ -212,8 +212,8 @@ playerTab.Section("Noclip").Toggle("Enable Noclip [⚠️]", function (s)
     end)
 end)
 
-local killerTab = window.Tab("Killer")
-local killerSection = killerTab.Section("Killer")
+local killerTab = window:Tab("Killer", "rbxassetid://83038806046146")
+local killerSection = killerTab:AddSection("Killer")
 killerSection.Toggle("Spectate Killer", function (state)
     if state then
         local killer = workspace.Players.Killers:GetChildren()[1]
@@ -253,8 +253,8 @@ killerSection.Button("Kill All [KILLER TEAM]", function()
     end
 end)
 
-local teleportsTab = window.Tab("Teleport")
-local generatorsSection = teleportsTab.Section("Generators")
+local teleportsTab = window:Tab("Teleport", "rbxassetid://100658585674886")
+local generatorsSection = teleportsTab:AddSection("Generators")
 for i = 1, 5 do
     generatorsSection.Button("TP to generator " .. i, function ()
         pcall(function ()
