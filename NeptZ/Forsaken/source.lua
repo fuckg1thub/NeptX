@@ -1,5 +1,6 @@
 -- switched the ui for something cleaner
-
+-- small changes to auto generator (will now check if it actually started using it, also twice as fast literally)
+-- added misc tab (Allow Jump, 	No Fog, Reset Character, Rejoin)
 _G.yeaican = false
 if not _G.yeaican then
     if _G.ialreadyloadedit then
@@ -64,14 +65,16 @@ generatorsSection.Toggle("Instant Generator", function(bool)
                         if not generatorsDid[v] and v.Name == "Generator" then
                             generatorsDid[v] = true
                             local old; old = hookfunction(getsenv(v.Scripts.Client).toggleGeneratorState, function(a)
-                                print("wahr", a)
+                                if not _G.instantGenerator then return old(a) end
                                 if a ~= "enter" then return old("leave") end
-                                old("enter")
+                                local ou = v.Remotes.RF:InvokeServer("enter")
+                                if ou ~= "fixing" then return end
                                 for i = 1, 4 do
+                                    if v.Progress.Value >= 100 then break end
                                     game.StarterGui:SetCore("SendNotification",
                                         { Title = "generator", Text = tostring(i), Duration = 9 })
                                     v.Remotes.RE:FireServer()
-                                    task.wait(2.5)
+                                    task.wait(2.5/2)
                                 end
                                 return ""
                             end)
@@ -268,3 +271,39 @@ for i = 1, 5 do
         end)
     end)
 end
+local miscTab = window:Tab("Misc", "rbxassetid://85291691462928")
+local miscSection = miscTab:AddSection("Miscallenous")
+miscSection.Toggle("Allow Jump [⚠️]", function (s)
+    _G.mhhmmm2 = s
+    if s then
+         game.StarterGui:SetCore("SendNotification",
+        { Title = "KICK WARNING", Text = "WARNING jumping repeatedly will KICK YOU because the game will think you are flying!", Duration = 9 })
+    end
+    task.spawn(function ()
+        local localPlayer = game:GetService("Players").LocalPlayer
+        while task.wait() do
+            if not _G.mhhmmm2 then break end
+            local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.JumpPower = 50
+            end
+        end
+    end)
+end)
+miscSection.Button("No Fog", function ()
+	for i,v in pairs(game.Lighting:GetDescendants()) do
+        if not v:IsA("Atmosphere") then continue end
+		v:Destroy()
+	end
+    game.Lighting.FogEnd = 999999
+end)
+miscSection.Button("Kill Yourself", function ()
+    pcall(function ()
+        game.Players.LocalPlayer.Character:BreakJoints()
+    end)
+end)
+miscSection.Button("Rejoin", function ()
+    pcall(function ()
+        game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.localPlayer)
+    end)
+end)
