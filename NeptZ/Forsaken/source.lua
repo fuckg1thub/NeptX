@@ -1,6 +1,6 @@
 -- switched the ui for something cleaner
 
-_G.yeaican = true
+_G.yeaican = false
 if not _G.yeaican then
     if _G.ialreadyloadedit then
         print("bro, fuck no")
