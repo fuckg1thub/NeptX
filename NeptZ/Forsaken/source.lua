@@ -1,6 +1,7 @@
 -- switched the ui for something cleaner
 -- small changes to auto generator (will now check if it actually started using it, also twice as fast literally)
 -- added misc tab (Allow Jump, 	No Fog, Reset Character, Rejoin)
+-- added inf jump (pretty shit lmao)
 _G.yeaican = false
 if not _G.yeaican then
     if _G.ialreadyloadedit then
@@ -212,6 +213,16 @@ playerTab:AddSection("Noclip").Toggle("Enable Noclip [⚠️]", function (s)
                 end
             end
         end
+    end)
+end)
+playerTab:AddSection("Infinite Jump").Toggle("Infinite Jump", function (s)
+    if s == false then
+        return _G.connection:Disconnect()
+    end
+    _G.connection = game:GetService("UserInputService").JumpRequest:Connect(function ()
+        pcall(function ()
+            game.Players.LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end)
     end)
 end)
 
