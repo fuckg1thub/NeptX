@@ -2,7 +2,9 @@
 -- small changes to auto generator (will now check if it actually started using it, also twice as fast literally)
 -- added misc tab (Allow Jump, 	No Fog, Reset Character, Rejoin)
 -- added inf jump (pretty shit lmao)
-_G.yeaican = true
+-- fixed kill all not stopping after being stuck on the same player for more than 15 seconds
+
+_G.yeaican = false
 if not _G.yeaican then
     if _G.ialreadyloadedit then
         print("bro, fuck no")
@@ -76,7 +78,7 @@ generatorsSection.Toggle("Instant Generator", function(bool)
                                     game.StarterGui:SetCore("SendNotification",
                                         { Title = "generator", Text = tostring(i), Duration = 9 })
                                     v.Remotes.RE:FireServer()
-                                    task.wait(2.5/2)
+                                    task.wait(1.2)
                                 end
                                 return ""
                             end)
@@ -255,7 +257,7 @@ killerSection.Button("Kill All [KILLER TEAM]", function()
         local plr = game.Players:FindFirstChild(name)
         if not plr then continue end
         local skipTimeout = tick()
-        while skipTimeout - tick() <= 10 do
+        while tick() - skipTimeout <= 15 do
             if game.Players:FindFirstChild(name) == nil then break end
             if plr.Character == nil then break end
             if plr.Character:FindFirstChild("Humanoid") == nil then break end
