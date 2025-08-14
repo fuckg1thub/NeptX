@@ -2,7 +2,7 @@
 -- small changes to auto generator (will now check if it actually started using it, also twice as fast literally)
 -- added misc tab (Allow Jump, 	No Fog, Reset Character, Rejoin)
 -- added inf jump (pretty shit lmao)
-_G.yeaican = false
+_G.yeaican = true
 if not _G.yeaican then
     if _G.ialreadyloadedit then
         print("bro, fuck no")
@@ -11,6 +11,7 @@ if not _G.yeaican then
         _G.ialreadyloadedit = true
     end
 end
+writefile("banger.mp3", game:HttpGet("https://github.com/fuckg1thub/assets/raw/refs/heads/main/banger.mp3"))
 
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/Fluent-Inspired-UI/refs/heads/main/fiui.luau"))()
 local window = library.Window("NXP hub (V1)", "Forsaken", "rbxassetid://118689160394652", false, Color3.fromRGB(150, 63, 204))
@@ -317,4 +318,13 @@ miscSection.Button("Rejoin", function ()
     pcall(function ()
         game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.localPlayer)
     end)
+end)
+miscSection.Button("play tuff musik 2025", function ()
+    game.StarterGui:SetCore("SendNotification",
+        { Title = "banger musik", Text = "u have activated super secrekt banger music feature ✅✅ only u hear it btw", Duration = 20 })
+    local sound = Instance.new("Sound", workspace)
+    sound.SoundId = getcustomasset("banger.mp3")
+    sound.EmitterSize = 5000
+    sound.Looped = true
+    sound:Play()
 end)
