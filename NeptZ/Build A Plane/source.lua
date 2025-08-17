@@ -1,6 +1,3 @@
-loadstring(game:HttpGet("https://pastefy.app/uqQKQkAR/raw"))()
-
--- doesnt look like my other scripts at all because i hella rushed it
 -- yes, this is my code not pasted 😭
 local blocksInfo = require(game:GetService("ReplicatedStorage").Modules.Utilities.BlocksUtil).BlockInfo
 _G.originalz = _G.originalz or blocksInfo
@@ -21,10 +18,10 @@ local function getPlane()
     end
 end
 
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/assets/refs/heads/main/lib.lua"))()
-local window = library.Window("NeptZ", "Plane")
-local blocksTab = window.Tab("Blocks")
-local mainsection = blocksTab.Section("Blocks")
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/Fluent-Inspired-UI/refs/heads/main/fiui.luau"))()
+local window = library.Window("NXP hub (V1)", "Build A Plane", "rbxassetid://118689160394652", false, Color3.fromRGB(150, 63, 204))
+local blocksTab = window:Tab("Blocks", "rbxassetid://101966922795157")
+local mainsection = blocksTab:AddSection("Blocks", "rbxassetid://73140121358767")
 mainsection.Toggle("Infinite Fuel", function(call)
     if call == false then
         modifyBlockData("fuel_1", "Fuel", getBlockData("fuel_1", "Fuel"))
@@ -76,8 +73,8 @@ mainsection.Slider("Propellor Speed", 0, 1, 300, function (v)
         modifyBlockData("propeller_blood", "Force", _G.propeler2)
     end
 end)
-local farmTab = window.Tab("Auto Farm")
-local farmSection = farmTab.Section("Farming")
+local farmTab = window:Tab("Auto Farm", "rbxassetid://73140121358767")
+local farmSection = farmTab:AddSection("Farming")
 local function yet()
     if getPlane() == nil then return end
     getPlane().CFrame = CFrame.new(getPlane().CFrame.X, 200, getPlane().CFrame.Z)
@@ -118,8 +115,8 @@ farmSection.Toggle("Auto Launch", function(call)
         end
     end)
 end)
-local miscTab = window.Tab("Misc")
-local miscSection = miscTab.Section("Misc")
+local miscTab = window:Tab("Misc", "rbxassetid://85291691462928")
+local miscSection = miscTab:AddSection("Misc")
 miscSection.Button("Move Plane Up", function()
     local plane = getPlane()
     if plane then
