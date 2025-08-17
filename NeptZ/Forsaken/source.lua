@@ -7,6 +7,7 @@
 -- added auto start generator
 -- added generator nametags
 -- added auto coin flip
+-- added enter killer only entrances as survivor (FORGOT TO LIST THIS)
 
 _G.yeaican = false
 if not _G.yeaican then
@@ -17,6 +18,12 @@ if not _G.yeaican then
         _G.ialreadyloadedit = true
     end
 end
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/NeptX/refs/heads/main/LoaderGUI.lua"))()(
+    "Forsaken",
+    "Forsaken script nby neptunescripts!\nrscripts: @ntu\nscriptblox: @newdiscordacount129"
+).Wait()
+
 --writefile("banger.mp3", game:HttpGet("https://github.com/fuckg1thub/assets/raw/refs/heads/main/banger.mp3"))
 
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/Fluent-Inspired-UI/refs/heads/main/fiui.luau"))()
