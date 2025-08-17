@@ -8,6 +8,9 @@
 -- added generator nametags
 -- added auto coin flip
 -- added enter killer only entrances as survivor (FORGOT TO LIST THIS)
+-- fixed generator teleports going into walls and leading to getting kicked
+-- added cool load thingy when executing
+-- added teleport to random survivor
 
 _G.yeaican = false
 if not _G.yeaican then
@@ -394,11 +397,16 @@ killerSection.Button("Kill All [KILLER TEAM]", function()
         end
     end
 end)
+killerSection.Button("Teleport To Random Survivor", function()
+    pcall(function()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace.Players.Survivors:GetChildren()[math.random(1, #workspace.Players.Survivors:GetChildren())].HumanoidRootPart.CFrame
+    end)
+end)
 
 local teleportsTab = window:Tab("Teleport", "rbxassetid://100658585674886")
 local generatorsSection = teleportsTab:AddSection("Generators")
 for i = 1, 5 do
-    generatorsSection.Button("TP to generator " .. i, function ()
+    generatorsSection.Button("Teleport to generator " .. i, function ()
         pcall(function ()
             local gens = {}
             for i, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
@@ -406,7 +414,7 @@ for i = 1, 5 do
                     table.insert(gens, v)
                 end
             end
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = gens[i].PrimaryPart.CFrame + Vector3.new(0, 10, 0)
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = gens[i].Positions.Center.CFrame + Vector3.new(0, 10, 0)
         end)
     end)
 end
