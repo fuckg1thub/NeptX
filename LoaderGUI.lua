@@ -71,6 +71,7 @@ return function(title, text)
   TextLabel.TextSize = 17.000
   TextLabel.TextStrokeTransparency = 0.000
   TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+  TextLabel.RichText = true
   
   TextLabel_2.Parent = GameDetected_2
   TextLabel_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
