@@ -154,12 +154,13 @@ return function(title, text)
   
   local uhuh = false
   TextLabel_3.InputEnded:Connect(function(i)
-    if not (i.KeyCode ~= Enum.UserInputType.MouseButton1 or i.UserInputType ~= Enum.UserInputType.Touch) then return end
-    local balsss = GameDetected
-    game:GetService("TweenService"):Create(balsss, TweenInfo.new(.4, Enum.EasingStyle.Sine), {Size = UDim2.new(0, 0, 0, 0)}):Play()
-    wait(1.1)
-    uhuh = true
-    ScreenGui:Destroy()
+    if i.KeyCode == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+      local balsss = GameDetected
+      game:GetService("TweenService"):Create(balsss, TweenInfo.new(.4, Enum.EasingStyle.Sine), {Size = UDim2.new(0, 0, 0, 0)}):Play()
+      wait(1.1)
+      uhuh = true
+      ScreenGui:Destroy()
+      end
   end)
   return {
     Wait = function()
