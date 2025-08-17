@@ -21,7 +21,7 @@ end
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/NeptX/refs/heads/main/LoaderGUI.lua"))()(
     "Forsaken",
-    "Forsaken script nby neptunescripts!\nrscripts: @ntu\nscriptblox: @newdiscordacount129"
+    "Forsaken script by neptunescripts!\nrscripts: @ntu\nscriptblox: @newdiscordacount129"
 ).Wait()
 
 --writefile("banger.mp3", game:HttpGet("https://github.com/fuckg1thub/assets/raw/refs/heads/main/banger.mp3"))
