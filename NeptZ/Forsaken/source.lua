@@ -22,6 +22,8 @@
     -- added auto pick up near items
     -- added pick up all items
     -- added complete all generators
+    -- fixed "complete all generators" only picking the center even if somebody is there
+    -- fixed auto complete generator (sorry)
 
 --[[
                                $$\                                                                 $$\            $$\               
