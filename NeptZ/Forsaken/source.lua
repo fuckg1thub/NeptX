@@ -209,8 +209,7 @@ generatorsSection.Toggle("Auto Complete Generator [📜]", function(bool)
                                 for i = 1, 4 do
                                     if v.Progress.Value >= 100 then break end
                                     if not game.Players.LocalPlayer.PlayerGui:FindFirstChild("PuzzleUI") then break end
-                                    game.StarterGui:SetCore("SendNotification",
-                                        { Title = "generator", Text = tostring(i), Duration = 9 })
+                                    game.StarterGui:SetCore("SendNotification", { Title = "generator", Text = tostring(i), Duration = 9 })
                                     v.Remotes.RE:FireServer()
                                     task.wait(1.2)
                                 end
@@ -274,8 +273,7 @@ generatorsSection.Button("Complete Active Generator", function ()
                                 if v.Progress.Value >= 100 then break end
                                 if activelyAutoing then return end
                                 if not game.Players.LocalPlayer.PlayerGui:FindFirstChild("PuzzleUI") then break end
-                                game.StarterGui:SetCore("SendNotification",
-                                    { Title = "generator", Text = tostring(i), Duration = 9 })
+                                game.StarterGui:SetCore("SendNotification", { Title = "generator", Text = tostring(i), Duration = 9 })
                                 v.Remotes.RE:FireServer()
                                 task.wait(1.2)
                             end
@@ -299,8 +297,7 @@ generatorsSection.Button("Complete All Generators", function ()
                     for j = 1, 4 do
                         if v.Progress.Value >= 100 then break end
                         if activelyAutoing then return end
-                        game.StarterGui:SetCore("SendNotification",
-                            { Title = "generator", Text = tostring(j), Duration = 9 })
+                        game.StarterGui:SetCore("SendNotification", { Title = "generator", Text = tostring(j), Duration = 9 })
                         v.Remotes.RE:FireServer()
                         task.wait(1.2)
                     end
@@ -332,8 +329,7 @@ end)
 aimbotSection.Toggle("Aimbot [💻]", function (bool)
     _G.aimbot = bool
     if bool then
-        game.StarterGui:SetCore("SendNotification",
-        { Title = "aimbot enabled", Text = "aimbot is now on you can now hold right click to lock onto a survivor or the killer", Duration = 9 })
+        game.StarterGui:SetCore("SendNotification", { Title = "aimbot enabled", Text = "aimbot is now on you can now hold right click to lock onto a survivor or the killer", Duration = 9 })
     end
     task.spawn(function()
         while _G.aimbot do
@@ -491,8 +487,7 @@ local staminaSection = playerTab:AddSection("Stamina")
 staminaSection.Button("Infinite Stamina [📜]", function()
     require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting).DefaultConfig.MaxStamina = 9999
     require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting).DefaultConfig.StaminaLoss = 0
-    game.StarterGui:SetCore("SendNotification",
-        { Title = "warning", Text = "this effect wont apply until next round, but you only have to press it once this entire session", Duration = 9 })
+    game.StarterGui:SetCore("SendNotification", { Title = "warning", Text = "this effect wont apply until next round, but you only have to press it once this entire session", Duration = 9 })
 end)
 staminaSection.Toggle("Always Sprint [📜]", function (call)
     _G.alwaysSprint = call
@@ -511,8 +506,7 @@ local sprintSpeed = 26
 staminaSection.Toggle("Fast Sprint [⚙️] [⚠️] [📜]", function (call)
     _G.fsprint = call
     if call then
-        game.StarterGui:SetCore("SendNotification",
-        { Title = "KICK WARNING", Text = "this feature can get you kicked, and is EXTREMELY risky!", Duration = 9 })
+        game.StarterGui:SetCore("SendNotification", { Title = "KICK WARNING", Text = "this feature can get you kicked, and is EXTREMELY risky!", Duration = 9 })
     end
 end)
 task.spawn(function ()
@@ -550,8 +544,7 @@ speedSection.Toggle("Speed Toggle", function (s)
 end)
 playerTab:AddSection("Noclip").Toggle("Enable Noclip [⚠️]", function (s)
     if s == true then
-         game.StarterGui:SetCore("SendNotification",
-        { Title = "KICK WARNING", Text = "you WILL get kicked if you are inside a wall for more than a second! only use for small shortcuts", Duration = 9 })
+         game.StarterGui:SetCore("SendNotification", { Title = "KICK WARNING", Text = "you WILL get kicked if you are inside a wall for more than a second! only use for small shortcuts", Duration = 9 })
     end
     _G.nokia = s
     local cachey = {}
@@ -591,7 +584,8 @@ local killerSection = killerTab:AddSection("Killer")
 killerSection.Toggle("Allow Killer Entrances as survivor", function (call)
     _G.killerent = call
     local function s9audioak()
-        for i, v in pairs(workspace.Map.Ingame.Map.KillerOnlyEntrances:GetChildren()) do
+        local walls = workspace.Map.Ingame.Map:FindFirstChild("Killer_Only Wall") or workspace.Map.Ingame.Map:FindFirstChild("KillerOnlyEntrances")
+        for i, v in pairs(walls:GetChildren()) do
             v.CanCollide = true
         end
     end
@@ -636,12 +630,18 @@ killerSection.Button("Teleport To Killer", function ()
     end
 end)
 killerSection.Button("Kill All [KILLER TEAM]", function()
+    if game.Players.LocalPlayer:GetNetworkPing() >= 0.3 then
+        return game.StarterGui:SetCore("SendNotification", { Title = "Kill all stopped", Text = "kill all stopped because your ping is too high. try getting better wifi and try again", Duration = 9 })
+    end
     for i, v in pairs(workspace.Players.Survivors:GetChildren()) do
         local name = v:GetAttribute("Username")
         local plr = game.Players:FindFirstChild(name)
         if not plr then continue end
         local skipTimeout = tick()
         while tick() - skipTimeout <= 15 do
+            if game.Players.LocalPlayer:GetNetworkPing() >= 0.3 then
+                return game.StarterGui:SetCore("SendNotification", { Title = "Kill all stopped", Text = "kill all stopped because your ping is too high. try getting better wifi and try again", Duration = 9 })
+            end
             if game.Players:FindFirstChild(name) == nil then break end
             if plr.Character == nil then break end
             if plr.Character:FindFirstChild("Humanoid") == nil then break end
@@ -693,8 +693,7 @@ local miscSection = miscTab:AddSection("Miscallenous")
 miscSection.Toggle("Allow Jump [⚠️]", function (s)
     _G.mhhmmm2 = s
     if s then
-         game.StarterGui:SetCore("SendNotification",
-        { Title = "KICK WARNING", Text = "WARNING jumping repeatedly will KICK YOU because the game will think you are flying!", Duration = 9 })
+         game.StarterGui:SetCore("SendNotification", { Title = "KICK WARNING", Text = "WARNING jumping repeatedly will KICK YOU because the game will think you are flying!", Duration = 9 })
     end
     task.spawn(function ()
         local localPlayer = game:GetService("Players").LocalPlayer
