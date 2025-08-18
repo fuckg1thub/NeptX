@@ -1,18 +1,38 @@
--- switched the ui for something cleaner
--- small changes to auto generator (will now check if it actually started using it, also twice as fast literally)
--- added misc tab (Allow Jump, 	No Fog, Reset Character, Rejoin)
--- added inf jump (pretty shit lmao)
--- fixed kill all not stopping after being stuck on the same player for more than 15 seconds
--- added auto block 1x1x1x1 poups
--- added auto start generator
--- added generator nametags
--- added auto coin flip
--- added enter killer only entrances as survivor (FORGOT TO LIST THIS)
--- fixed generator teleports going into walls and leading to getting kicked
--- added cool load thingy when executing
--- added teleport to random survivor
--- added always sprint
--- added fast sprint (configurable using a slider)
+-- // CHANGELOG (Oldest To Newest) \\ --
+    -- switched the ui for something cleaner
+    -- small changes to auto generator (will now check if it actually started using it, also twice as fast literally)
+    -- added misc tab (Allow Jump, 	No Fog, Reset Character, Rejoin)
+    -- added inf jump (pretty shit lmao)
+    -- fixed kill all not stopping after being stuck on the same player for more than 15 seconds
+    -- added auto block 1x1x1x1 poups
+    -- added auto start generator
+    -- added generator nametags
+    -- added auto coin flip
+    -- added enter killer only entrances as survivor (FORGOT TO LIST THIS)
+    -- fixed generator teleports going into walls and leading to getting kicked
+    -- added cool load thingy when executing
+    -- added teleport to random survivor
+    -- added always sprint
+    -- added fast sprint (configurable using a slider)
+    -- added aimbot (chance/coolkid)
+    -- added emote as killer
+
+--[[
+                               $$\                                                                 $$\            $$\               
+                               $$ |                                                                \__|           $$ |              
+$$$$$$$\   $$$$$$\   $$$$$$\ $$$$$$\   $$\   $$\ $$$$$$$\   $$$$$$\   $$$$$$$\  $$$$$$$\  $$$$$$\  $$\  $$$$$$\ $$$$$$\    $$$$$$$\ 
+$$  __$$\ $$  __$$\ $$  __$$\\_$$  _|  $$ |  $$ |$$  __$$\ $$  __$$\ $$  _____|$$  _____|$$  __$$\ $$ |$$  __$$\\_$$  _|  $$  _____|
+$$ |  $$ |$$$$$$$$ |$$ /  $$ | $$ |    $$ |  $$ |$$ |  $$ |$$$$$$$$ |\$$$$$$\  $$ /      $$ |  \__|$$ |$$ /  $$ | $$ |    \$$$$$$\  
+$$ |  $$ |$$   ____|$$ |  $$ | $$ |$$\ $$ |  $$ |$$ |  $$ |$$   ____| \____$$\ $$ |      $$ |      $$ |$$ |  $$ | $$ |$$\  \____$$\ 
+$$ |  $$ |\$$$$$$$\ $$$$$$$  | \$$$$  |\$$$$$$  |$$ |  $$ |\$$$$$$$\ $$$$$$$  |\$$$$$$$\ $$ |      $$ |$$$$$$$  | \$$$$  |$$$$$$$  |
+\__|  \__| \_______|$$  ____/   \____/  \______/ \__|  \__| \_______|\_______/  \_______|\__|      \__|$$  ____/   \____/ \_______/ 
+                    $$ |                                                                               $$ |                         
+                    $$ |                                                                               $$ |                         
+                    \__|                                                                               \__|                             
+            
+    THIS SCRIPT WAS MADE BY NEPTUNESCRIPTS         THIS SCRIPT WAS MADE BY NEPTUNESCRIPTS         THIS SCRIPT WAS MADE BY NEPTUNESCRIPTS
+        Pasting from this script is NOT allowed!!!!! If you want to take a feature from this script GIVE ME FUCKING CREDIT
+]]
 
 _G.yeaican = false
 if not _G.yeaican then
@@ -29,20 +49,70 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/NeptX/refs
     "Forsaken script by neptunescripts!\nrscripts: @ntu\nscriptblox: @newdiscordacount129"
 ).Wait()
 
---writefile("banger.mp3", game:HttpGet("https://github.com/fuckg1thub/assets/raw/refs/heads/main/banger.mp3"))
-
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/Fluent-Inspired-UI/refs/heads/main/fiui.luau"))()
 local window = library.Window("NXP hub (V1)", "Forsaken", "rbxassetid://118689160394652", false, Color3.fromRGB(150, 63, 204))
+
+local isKiller, isSurvivor, killerModel 
+do
+    local info = window:Tab("Read Me", "rbxassetid://110938791000175")
+    local sec = info:AddSection("Icon Meaning")
+    for i, v in pairs({
+        ["💻"] = "the feature ONLY works on a computer",
+        ["⚠️"] = "the feature is VERY RISKY!",
+        ["⚙️"] = "the feature should be configured",
+        ["📜"] = "the feature may not not work on bad executors",
+    }) do
+        sec.Button(i .. " " .. v, function() end)
+    end
+    local credits = info:AddSection("Credits")
+    credits.Button("💞 Made by neptunescripts!", function() end)
+    credits.Button("🔗 Rscripts @ntu", function() setclipboard("https://rscripts.net/@ntu") end)
+    credits.Button("🔗 Scriptblox @newdiscordacount129", function() setclipboard("https://scriptblox.com/u/newdiscordacount129") end)
+
+    task.spawn(function()
+        while task.wait() do
+            isKiller = (function()
+                for i, v in pairs(workspace.Players.Killers:GetChildren()) do
+                    if v:GetAttribute("Username") and game.Players:FindFirstChild(v:GetAttribute("Username")) then
+                        killerModel = v
+                    end
+                    if v:GetAttribute("Username") == game.Players.LocalPlayer.Name then
+                        return true
+                    end
+                end
+            end)()
+            isSurvivor = not isKiller
+        end
+    end)
+end
+
+local function getClosestSurvivorToMouse(x, y)
+    local closestDistance = math.huge
+    local closestSurvivor = nil
+    local cam = workspace.CurrentCamera
+    for i, v in pairs(workspace.Players.Survivors:GetChildren()) do
+        if v:GetAttribute("Username") == game.Players.LocalPlayer.Name then continue end
+        local nihpos = v.HumanoidRootPart.Position
+        local vector, onScreen = cam:worldToViewportPoint(nihpos)
+        if onScreen then
+            local mag = (Vector2.new(x, y) - Vector2.new(vector.X, vector.Y)).magnitude
+            if mag < closestDistance then
+                closestDistance = mag
+                closestSurvivor = v
+            end
+        end
+    end
+    return closestSurvivor
+end
+
 local mainTab = window:Tab("Main", "rbxassetid://101966922795157")
 local generatorsSection = mainTab:AddSection("Generators")
 local killersSection = mainTab:AddSection("Killers")
 local survivorsSection = mainTab:AddSection("Survivors")
 local itemsSection = mainTab:AddSection("Items")
+local aimbotSection = mainTab:AddSection("Aimbot")
 
 local generatorsDid = {}
-
-local kasjdkasjda = true
-
 generatorsSection.Toggle("Generators ESP", function(bool)
     _G.generators = bool
     task.spawn(function()
@@ -114,7 +184,7 @@ generatorsSection.Toggle("Generators Nametags", function(bool)
     end)
 end)
 local activelyAutoing = false
-generatorsSection.Toggle("Auto Complete Generator", function(bool)
+generatorsSection.Toggle("Auto Complete Generator [📜]", function(bool)
     _G.instantGenerator = bool
     task.spawn(function()
         while _G.instantGenerator and task.wait() do
@@ -183,6 +253,57 @@ generatorsSection.Toggle("Auto Start Generator", function(bool)
         end
     end)
 end)
+--[[
+todo: add chance silent aim
+local args = {
+	"USERNAMEChanceFireShot",
+	vector.create(-0.8255635499954224, 1.2309562258394635e-08, 0.5643091797828674)
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+]]
+local aimbotHeld = false
+local uis = game:GetService("UserInputService")
+uis.InputBegan:Connect(function (i)
+    if i.UserInputType == Enum.UserInputType.MouseButton2 then
+        aimbotHeld = true
+    end
+end)
+uis.InputEnded:Connect(function (i)
+    if i.UserInputType == Enum.UserInputType.MouseButton2 then
+        aimbotHeld = false
+    end
+end)
+aimbotSection.Toggle("Aimbot [💻]", function (bool)
+    _G.aimbot = bool
+    if bool then
+        game.StarterGui:SetCore("SendNotification",
+        { Title = "aimbot enabled", Text = "aimbot is now on you can now hold right click to lock onto a survivor or the killer", Duration = 9 })
+    end
+    task.spawn(function()
+        while _G.aimbot do
+            if aimbotHeld then
+                local __DEBUG_FAKEKILLER = false -- future me, change this to false (future me 2, done)
+                local cam = workspace.CurrentCamera
+                if isKiller or __DEBUG_FAKEKILLER then
+                    local mouse = game.Players.LocalPlayer:GetMouse()
+                    local x, y = mouse.X, mouse.Y
+                    local v = getClosestSurvivorToMouse(x, y)
+                    if v then
+                        local root = v.HumanoidRootPart
+                        cam.CFrame = CFrame.new(cam.CFrame.Position, root.Position)
+                    end
+                elseif isSurvivor then
+                    if killerModel then
+                        cam.CFrame = CFrame.new(cam.CFrame.Position, killerModel.HumanoidRootPart.Position)
+                    end
+                else
+                    print("none")
+                end
+            end
+            task.wait()
+        end
+    end)
+end)
 -- game:GetService("Players").LocalPlayer.PlayerGui.TemporaryUI:GetChildren()[12]
 
 killersSection.Toggle("Killer ESP", function(bool)
@@ -208,6 +329,7 @@ killersSection.Toggle("Killer ESP", function(bool)
         end
     end)
 end)
+
 survivorsSection.Toggle("Survivors ESP", function(bool)
     _G.survivors = bool
     task.spawn(function()
@@ -271,13 +393,13 @@ itemsSection.Toggle("Items ESP", function(bool)
 end)
 local playerTab = window:Tab("Local Player", "rbxassetid://73140121358767")
 local staminaSection = playerTab:AddSection("Stamina")
-staminaSection.Button("Infinite Stamina", function()
+staminaSection.Button("Infinite Stamina [📜]", function()
     require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting).DefaultConfig.MaxStamina = 9999
     require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting).DefaultConfig.StaminaLoss = 0
     game.StarterGui:SetCore("SendNotification",
         { Title = "warning", Text = "this effect wont apply until next round, but you only have to press it once this entire session", Duration = 9 })
 end)
-staminaSection.Toggle("Always Sprint", function (call)
+staminaSection.Toggle("Always Sprint [📜]", function (call)
     _G.alwaysSprint = call
     task.spawn(function()
         while _G.alwaysSprint and task.wait() do
@@ -291,7 +413,7 @@ staminaSection.Toggle("Always Sprint", function (call)
 end)
 
 local sprintSpeed = 26
-staminaSection.Toggle("Fast Sprint ⚙️⚠️", function (call)
+staminaSection.Toggle("Fast Sprint [⚙️] [⚠️] [📜]", function (call)
     _G.fsprint = call
     if call then
         game.StarterGui:SetCore("SendNotification",
@@ -505,12 +627,16 @@ miscTab:AddSection("Popups").Toggle("Auto Remove 1x1x1x1 popups", function (bool
         end
     end)
 end)
---[[
-    game.StarterGui:SetCore("SendNotification",
-        { Title = "banger musik", Text = "u have activated super secrekt banger music feature ✅✅ only u hear it btw", Duration = 20 })
-    local sound = Instance.new("Sound", workspace)
-    sound.SoundId = getcustomasset("banger.mp3")
-    sound.EmitterSize = 5000
-    sound.Looped = true
-    sound:Play()
-end]]
+local emoteAsKiller = miscTab:AddSection("Emote As Killer")
+local emoteName = "AICatDance"
+local emoteTable = {}
+for i, v in pairs(game:GetService("ReplicatedStorage").Assets.Emotes:GetChildren()) do
+    table.insert(emoteTable, v.Name)
+end
+table.sort(emoteTable)
+emoteAsKiller:AddDropdown("_", "Select Emote (must own)", emoteTable, function (e)
+    emoteName = e
+end)
+emoteAsKiller.Button("Play Emote", function ()
+    game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("PlayEmote", "Animations", emoteName)
+end)
