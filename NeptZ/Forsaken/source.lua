@@ -11,6 +11,8 @@
 -- fixed generator teleports going into walls and leading to getting kicked
 -- added cool load thingy when executing
 -- added teleport to random survivor
+-- added always sprint
+-- added fast sprint (configurable using a slider)
 
 _G.yeaican = false
 if not _G.yeaican then
@@ -238,6 +240,7 @@ survivorsSection.Toggle("Auto Coin Flip", function (cool)
         end
     end)
 end)
+
 itemsSection.Toggle("Items ESP", function(bool)
     _G.items = bool
     task.spawn(function()
@@ -267,11 +270,47 @@ itemsSection.Toggle("Items ESP", function(bool)
     end)
 end)
 local playerTab = window:Tab("Local Player", "rbxassetid://73140121358767")
-playerTab:AddSection("Stamina").Button("Infinite Stamina", function()
+local staminaSection = playerTab:AddSection("Stamina")
+staminaSection.Button("Infinite Stamina", function()
     require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting).DefaultConfig.MaxStamina = 9999
     require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting).DefaultConfig.StaminaLoss = 0
     game.StarterGui:SetCore("SendNotification",
         { Title = "warning", Text = "this effect wont apply until next round, but you only have to press it once this entire session", Duration = 9 })
+end)
+staminaSection.Toggle("Always Sprint", function (call)
+    _G.alwaysSprint = call
+    task.spawn(function()
+        while _G.alwaysSprint and task.wait() do
+            local sprint = require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting)
+            if not sprint.IsSprinting then
+                sprint.IsSprinting = true
+                sprint.__sprintedEvent:Fire(true)
+            end
+        end
+    end)
+end)
+
+local sprintSpeed = 26
+staminaSection.Toggle("Fast Sprint ⚙️⚠️", function (call)
+    _G.fsprint = call
+    if call then
+        game.StarterGui:SetCore("SendNotification",
+        { Title = "KICK WARNING", Text = "this feature can get you kicked, and is EXTREMELY risky!", Duration = 9 })
+    end
+end)
+task.spawn(function ()
+    local sprint = require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting)
+    while true do
+        if _G.fsprint then
+            sprint.SprintSpeed = sprintSpeed
+        else
+            sprint.SprintSpeed = 26
+        end
+        task.wait()
+    end 
+end)
+staminaSection.Slider("Sprint Speed", 26, 26, 80, function (slid)
+    sprintSpeed = slid
 end)
 
 local speedSection = playerTab:AddSection("Speed")
