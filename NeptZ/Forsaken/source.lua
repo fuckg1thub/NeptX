@@ -34,7 +34,7 @@ $$ |  $$ |\$$$$$$$\ $$$$$$$  | \$$$$  |\$$$$$$  |$$ |  $$ |\$$$$$$$\ $$$$$$$  |\
         Pasting from this script is NOT allowed!!!!! If you want to take a feature from this script GIVE ME FUCKING CREDIT
 ]]
 
-_G.yeaican = false
+_G.yeaican = true
 if not _G.yeaican then
     if _G.ialreadyloadedit then
         print("bro, fuck no")
@@ -44,7 +44,7 @@ if not _G.yeaican then
     end
 end
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/NeptX/refs/heads/main/LoaderGUI.lua"))()(
+loadstring(game:HttpGet("https://pastefy.app/UoGeqUn1/raw"))()(
     "Forsaken",
     "Forsaken script by neptunescripts!\nrscripts: @ntu\nscriptblox: @newdiscordacount129"
 ).Wait()
@@ -169,7 +169,7 @@ generatorsSection.Toggle("Generators Nametags", function(bool)
                         end
                     end
                 end)
-                print(suc, res)
+                --print(suc, res)
             else
                 pcall(function()
                     for i, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
@@ -554,6 +554,8 @@ killerSection.Button("Kill All [KILLER TEAM]", function()
             game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame
             game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("UseActorAbility",
                 "Slash")
+            game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("UseActorAbility",
+                "Punch")
             task.wait()
         end
     end
@@ -581,6 +583,7 @@ for i = 1, 5 do
 end
 local miscTab = window:Tab("Misc", "rbxassetid://85291691462928")
 local miscSection = miscTab:AddSection("Miscallenous")
+
 miscSection.Toggle("Allow Jump [⚠️]", function (s)
     _G.mhhmmm2 = s
     if s then
