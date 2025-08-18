@@ -40,7 +40,7 @@ $$ |  $$ |\$$$$$$$\ $$$$$$$  | \$$$$  |\$$$$$$  |$$ |  $$ |\$$$$$$$\ $$$$$$$  |\
         Pasting from this script is NOT allowed!!!!! If you want to take a feature from this script GIVE ME FUCKING CREDIT
 ]]
 
---getgenv().NXP_LOADED = false
+getgenv().NXP_LOADED = false
 if getgenv().NXP_LOADED then
     error("Already loaded!")
 end
@@ -286,7 +286,26 @@ generatorsSection.Button("Complete All Generators", function ()
             if v.Name == "Generator" then
                 pcall(function ()
                     if v.Progress.Value >= 100 then return end
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.Positions.Center.CFrame
+                    local function checkOccupance(pos)
+                        for i, v in pairs(workspace.Players.Survivors:GetChildren()) do
+                            if not v:FindFirstChild("HumanoidRootPart") then continue end
+                            if v == game.Players.LocalPlayer then continue end
+                            if (v.HumanoidRootPart.Position - pos).magnitude <= 6 then
+                                return true
+                            end
+                        end
+                        return false
+                    end
+                    -- i can only assume this works, its not easy to test it
+                    local centerOccupied, rightOccupied, leftOccupied = checkOccupance(v.Positions.Center.Position), checkOccupance(v.Positions.Right.Position), checkOccupance(v.Positions.Left.Position)
+                    if centerOccupied and rightOccupied and leftOccupied then return end
+                    if not centerOccupied then
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.Positions.Center.CFrame
+                    elseif not rightOccupied then
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.Positions.Right.CFrame
+                    else
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.Positions.Left.CFrame
+                    end
                     task.wait(0.2)
                     v.Remotes.RF:InvokeServer("enter")
                     for j = 1, 4 do
@@ -591,7 +610,8 @@ killerSection.Toggle("Allow Killer Entrances as survivor", function (call)
     task.spawn(function ()
         while _G.killerent and task.wait() do
             if not workspace.Map.Ingame:FindFirstChild("Map") then continue end
-            if not workspace.Map.Ingame.Map:FindFirstChild("KillerOnlyEntrances") then continue end
+            local walls = workspace.Map.Ingame.Map:FindFirstChild("Killer_Only Wall") or workspace.Map.Ingame.Map:FindFirstChild("KillerOnlyEntrances")
+            if not walls then continue end
             if not _G.killerent then
                 pcall(s9audioak)
                 break
