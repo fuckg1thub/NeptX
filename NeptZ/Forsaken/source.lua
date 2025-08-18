@@ -16,6 +16,12 @@
     -- added fast sprint (configurable using a slider)
     -- added aimbot (chance/coolkid)
     -- added emote as killer
+    -- added complete active generator (button)
+    -- added teleport to random item
+    -- fixed aimbot on killer locking on even if not visible on the screen
+    -- added auto pick up near items
+    -- added pick up all items
+    -- added complete all generators
 
 --[[
                                $$\                                                                 $$\            $$\               
@@ -34,7 +40,7 @@ $$ |  $$ |\$$$$$$$\ $$$$$$$  | \$$$$  |\$$$$$$  |$$ |  $$ |\$$$$$$$\ $$$$$$$  |\
         Pasting from this script is NOT allowed!!!!! If you want to take a feature from this script GIVE ME FUCKING CREDIT
 ]]
 
-_G.yeaican = true
+_G.yeaican = false
 if not _G.yeaican then
     if _G.ialreadyloadedit then
         print("bro, fuck no")
@@ -202,6 +208,7 @@ generatorsSection.Toggle("Auto Complete Generator [📜]", function(bool)
                                 activelyAutoing = true
                                 for i = 1, 4 do
                                     if v.Progress.Value >= 100 then break end
+                                    if not game.Players.LocalPlayer.PlayerGui:FindFirstChild("PuzzleUI") then break end
                                     game.StarterGui:SetCore("SendNotification",
                                         { Title = "generator", Text = tostring(i), Duration = 9 })
                                     v.Remotes.RE:FireServer()
@@ -253,6 +260,55 @@ generatorsSection.Toggle("Auto Start Generator", function(bool)
         end
     end)
 end)
+
+generatorsSection.Button("Complete Active Generator", function ()
+    if activelyAutoing then return end
+    pcall(function()
+        for i, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+            if v.Name == "Generator" then
+                pcall(function ()
+                    if game.Players.LocalPlayer.PlayerGui:FindFirstChild("PuzzleUI") then
+                        local hello = v.Positions.Center.Position
+                        if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - hello).magnitude <= 21 then
+                            for i = 1, 4 do
+                                if v.Progress.Value >= 100 then break end
+                                if activelyAutoing then return end
+                                if not game.Players.LocalPlayer.PlayerGui:FindFirstChild("PuzzleUI") then break end
+                                game.StarterGui:SetCore("SendNotification",
+                                    { Title = "generator", Text = tostring(i), Duration = 9 })
+                                v.Remotes.RE:FireServer()
+                                task.wait(1.2)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+end)
+generatorsSection.Button("Complete All Generators", function ()
+    if activelyAutoing then return end
+    pcall(function()
+        for i, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+            if v.Name == "Generator" then
+                pcall(function ()
+                    if v.Progress.Value >= 100 then return end
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.Positions.Center.CFrame
+                    task.wait(0.2)
+                    v.Remotes.RF:InvokeServer("enter")
+                    for j = 1, 4 do
+                        if v.Progress.Value >= 100 then break end
+                        if activelyAutoing then return end
+                        game.StarterGui:SetCore("SendNotification",
+                            { Title = "generator", Text = tostring(j), Duration = 9 })
+                        v.Remotes.RE:FireServer()
+                        task.wait(1.2)
+                    end
+                end)
+            end
+        end
+    end)
+end)
 --[[
 todo: add chance silent aim
 local args = {
@@ -293,7 +349,7 @@ aimbotSection.Toggle("Aimbot [💻]", function (bool)
                         cam.CFrame = CFrame.new(cam.CFrame.Position, root.Position)
                     end
                 elseif isSurvivor then
-                    if killerModel then
+                    if killerModel and ({cam:worldToViewportPoint(killerModel.HumanoidRootPart.Position)})[2] then
                         cam.CFrame = CFrame.new(cam.CFrame.Position, killerModel.HumanoidRootPart.Position)
                     end
                 else
@@ -388,6 +444,45 @@ itemsSection.Toggle("Items ESP", function(bool)
                 end)
                 break
             end
+        end
+    end)
+end)
+itemsSection.Toggle("Auto Pick Up Near Items [📜]", function (call)
+    _G.pickUpNear = call
+    task.spawn(function()
+        while _G.pickUpNear and task.wait() do
+            pcall(function()
+                if isKiller then return end
+                local items = {}
+                for i, v in pairs(workspace.Map.Ingame:GetDescendants()) do
+                    if v:IsA("Tool") then
+                        table.insert(items, v.ItemRoot)
+                    end
+                end
+                for i, v in pairs(items) do
+                    local magnitude = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.Position).magnitude
+                    if magnitude <= 10 then
+                        fireproximityprompt(v.ProximityPrompt)
+                    end
+                end
+            end)
+        end
+    end)
+end)
+itemsSection.Button("Pick Up Available Items [📜]", function()
+    pcall(function()
+        if isKiller then return end
+        local items = {}
+        for i, v in pairs(workspace.Map.Ingame:GetDescendants()) do
+            if v:IsA("Tool") then
+                table.insert(items, v.ItemRoot)
+            end
+        end
+        for i, v in pairs(items) do
+            if game.Players.LocalPlayer.Backpack:FindFirstChild(v.Parent.Name) then continue end
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
+            task.wait(0.5)
+            fireproximityprompt(v.ProximityPrompt)
         end
     end)
 end)
@@ -569,7 +664,7 @@ end)
 local teleportsTab = window:Tab("Teleport", "rbxassetid://100658585674886")
 local generatorsSection = teleportsTab:AddSection("Generators")
 for i = 1, 5 do
-    generatorsSection.Button("Teleport to generator " .. i, function ()
+    generatorsSection.Button("Teleport To Generator " .. i, function ()
         pcall(function ()
             local gens = {}
             for i, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
@@ -581,6 +676,17 @@ for i = 1, 5 do
         end)
     end)
 end
+teleportsTab:AddSection("Items").Button("Teleport To Random Item", function ()
+    local items = {}
+    pcall(function ()
+        for i, v in pairs(workspace.Map.Ingame:GetDescendants()) do
+            if v:IsA("Tool") then
+                table.insert(items, v)
+            end
+        end
+    end)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = items[math.random(1, #items)].ItemRoot.CFrame + Vector3.new(0, 10, 0)
+end)
 local miscTab = window:Tab("Misc", "rbxassetid://85291691462928")
 local miscSection = miscTab:AddSection("Miscallenous")
 
