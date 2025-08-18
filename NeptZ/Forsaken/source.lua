@@ -40,15 +40,11 @@ $$ |  $$ |\$$$$$$$\ $$$$$$$  | \$$$$  |\$$$$$$  |$$ |  $$ |\$$$$$$$\ $$$$$$$  |\
         Pasting from this script is NOT allowed!!!!! If you want to take a feature from this script GIVE ME FUCKING CREDIT
 ]]
 
-_G.yeaican = false
-if not _G.yeaican then
-    if _G.ialreadyloadedit then
-        print("bro, fuck no")
-		return
-    else
-        _G.ialreadyloadedit = true
-    end
+--getgenv().NXP_LOADED = false
+if getgenv().NXP_LOADED then
+    error("Already loaded!")
 end
+getgenv().NXP_LOADED = true
 
 loadstring(game:HttpGet("https://pastefy.app/UoGeqUn1/raw"))()(
     "Forsaken",
@@ -208,7 +204,6 @@ generatorsSection.Toggle("Auto Complete Generator [📜]", function(bool)
                                 activelyAutoing = true
                                 for i = 1, 4 do
                                     if v.Progress.Value >= 100 then break end
-                                    if not game.Players.LocalPlayer.PlayerGui:FindFirstChild("PuzzleUI") then break end
                                     game.StarterGui:SetCore("SendNotification", { Title = "generator", Text = tostring(i), Duration = 9 })
                                     v.Remotes.RE:FireServer()
                                     task.wait(1.2)
