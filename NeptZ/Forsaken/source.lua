@@ -42,7 +42,7 @@ $$ |  $$ |\$$$$$$$\ $$$$$$$  | \$$$$  |\$$$$$$  |$$ |  $$ |\$$$$$$$\ $$$$$$$  |\
         Pasting from this script is NOT allowed!!!!! If you want to take a feature from this script GIVE ME FUCKING CREDIT
 ]]
 
-getgenv().NXP_LOADED = false
+--getgenv().NXP_LOADED = false
 if getgenv().NXP_LOADED then
     error("Already loaded!")
 end
