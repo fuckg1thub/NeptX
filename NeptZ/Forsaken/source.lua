@@ -1,1046 +1,2 @@
---[[
-                               $$\                                                                 $$\            $$\               
-                               $$ |                                                                \__|           $$ |              
-$$$$$$$\   $$$$$$\   $$$$$$\ $$$$$$\   $$\   $$\ $$$$$$$\   $$$$$$\   $$$$$$$\  $$$$$$$\  $$$$$$\  $$\  $$$$$$\ $$$$$$\    $$$$$$$\ 
-$$  __$$\ $$  __$$\ $$  __$$\\_$$  _|  $$ |  $$ |$$  __$$\ $$  __$$\ $$  _____|$$  _____|$$  __$$\ $$ |$$  __$$\\_$$  _|  $$  _____|
-$$ |  $$ |$$$$$$$$ |$$ /  $$ | $$ |    $$ |  $$ |$$ |  $$ |$$$$$$$$ |\$$$$$$\  $$ /      $$ |  \__|$$ |$$ /  $$ | $$ |    \$$$$$$\  
-$$ |  $$ |$$   ____|$$ |  $$ | $$ |$$\ $$ |  $$ |$$ |  $$ |$$   ____| \____$$\ $$ |      $$ |      $$ |$$ |  $$ | $$ |$$\  \____$$\ 
-$$ |  $$ |\$$$$$$$\ $$$$$$$  | \$$$$  |\$$$$$$  |$$ |  $$ |\$$$$$$$\ $$$$$$$  |\$$$$$$$\ $$ |      $$ |$$$$$$$  | \$$$$  |$$$$$$$  |
-\__|  \__| \_______|$$  ____/   \____/  \______/ \__|  \__| \_______|\_______/  \_______|\__|      \__|$$  ____/   \____/ \_______/ 
-                    $$ |                                                                               $$ |                         
-                    $$ |                                                                               $$ |                         
-                    \__|                                                                               \__|                             
-]]
-
--- switched the ui for something cleaner
--- small changes to auto generator (will now check if it actually started using it, also twice as fast literally)
--- added misc tab (Allow Jump, 	No Fog, Reset Character, Rejoin)
--- added inf jump (pretty shit lmao)
--- fixed kill all not stopping after being stuck on the same player for more than 15 seconds
--- added auto block 1x1x1x1 poups
--- added auto start generator
--- added generator nametags
--- added auto coin flip
--- added enter killer only entrances as survivor (FORGOT TO LIST THIS)
--- fixed generator teleports going into walls and leading to getting kicked
--- added cool load thingy when executing
--- added teleport to random survivor
--- added always sprint
--- added fast sprint (configurable using a slider)
--- added aimbot (chance/coolkid)
--- added emote as killer
--- added complete active generator (button)
--- added teleport to random item
--- fixed aimbot on killer locking on even if not visible on the screen
--- added auto pick up near items
--- added pick up all items
--- added complete all generators
--- fixed "complete all generators" only picking the center even if somebody is there
--- fixed auto complete generator (sorry)
--- switched ui again (got chatgpt to port it over to obsidian)
-
-
--- Splash
-loadstring(game:HttpGet("https://pastefy.app/UoGeqUn1/raw"))()(
-    "Forsaken",
-    "Forsaken script by neptunescripts!\nrscripts: @ntu\nscriptblox: @newdiscordacount129"
-).Wait()
-
--- Linoria Library (Example.lua style)
-local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
-local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
-local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
-local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
-
--- Window
-local Window = Library:CreateWindow({
-    Title = "NXP hub V2",
-    Footer = "Forsaken",
-    Icon = "rbxassetid://130931198530758",
-    NotifySide = "Right",
-    ShowCustomCursor = true,
-    Size = UDim2.fromOffset(736, 361)
-})
-
--- Tabs
-local Tabs = {
-    ReadMe = Window:AddTab("Read Me", "info"),
-    Main = Window:AddTab("Main", "zap"),
-    ["Local Player"] = Window:AddTab("Local Player", "user"),
-    Killer = Window:AddTab("Killer", "skull"),
-    Teleport = Window:AddTab("Teleport", "map"),
-    Misc = Window:AddTab("Misc", "settings"),
-    ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
-}
-
--- ===== Non-UI helpers/state =====
-local isKiller, isSurvivor, killerModel 
-
-task.spawn(function()
-    while task.wait() do
-        if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers") then
-            for _, v in pairs(workspace.Players.Killers:GetChildren()) do
-                if v:GetAttribute("Username") and game.Players:FindFirstChild(v:GetAttribute("Username")) then
-                    killerModel = v
-                end
-                if v:GetAttribute("Username") == game.Players.LocalPlayer.Name then
-                    isKiller = true
-                end
-            end
-            isSurvivor = not isKiller
-        end
-    end
-end)
-
-local function getClosestSurvivorToMouse(x, y)
-    local closestDistance = math.huge
-    local closestSurvivor = nil
-    local cam = workspace.CurrentCamera
-    if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors") then
-        for _, v in pairs(workspace.Players.Survivors:GetChildren()) do
-            if v:GetAttribute("Username") ~= game.Players.LocalPlayer.Name then
-                if v:FindFirstChild("HumanoidRootPart")then
-                    local nihpos = v.HumanoidRootPart.Position
-                    local vector, onScreen = cam:WorldToViewportPoint(nihpos)
-                    if onScreen then
-                        local mag = (Vector2.new(x, y) - Vector2.new(vector.X, vector.Y)).Magnitude
-                        if mag < closestDistance then
-                            closestDistance = mag
-                            closestSurvivor = v
-                        end
-                    end
-                end
-            end
-        end
-    end
-    return closestSurvivor
-end
-
--- ========== Read Me Tab ==========
-do
-    local Credits = Tabs.ReadMe:AddLeftGroupbox("Credits")
-    Credits:AddButton({ Text = "💓 Made by neptunescripts :3", Func = function() end })
-    Credits:AddButton({ Text = "rscripts: @NXPHub", Func = function() setclipboard("https://rscripts.net/@NXPHub") end })
-    Credits:AddButton({ Text = "my scriptblox got banned :(", Func = function()  end })
-end
-
--- ========== Main Tab ==========
-local GeneratorsGroup = Tabs.Main:AddLeftGroupbox("Generators")
-local KillersGroup = Tabs.Main:AddRightGroupbox("Killers")
-local SurvivorsGroup = Tabs.Main:AddRightGroupbox("Survivors")
-local ItemsGroup = Tabs.Main:AddLeftGroupbox("Items")
-local AimbotGroup = Tabs.Main:AddRightGroupbox("Aimbot")
-
--- Generators: ESP
-GeneratorsGroup:AddToggle("GeneratorsESP", {
-    Text = "Generators ESP",
-    Default = false,
-    Callback = function(bool)
-        _G.generators = bool
-        task.spawn(function()
-            while task.wait() do
-                if _G.generators then
-                    pcall(function()
-                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
-                            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-                                if v.Name == "Generator" and not v:FindFirstChild("iskiddedfromneptz") then
-                                    local hl = Instance.new("Highlight", v)
-                                    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                                    hl.Name = "iskiddedfromneptz"
-                                    hl.FillColor = Color3.fromRGB(255, 255, 51)
-                                elseif v:FindFirstChild("iskiddedfromneptz") and v.Name == "Generator" then
-                                    if v:FindFirstChild("Progress") and v.Progress.Value >= 100 then
-                                        v.iskiddedfromneptz.FillColor = Color3.fromRGB(0, 255, 0)
-                                    end
-                                end
-                            end
-                        end
-                    end)
-                else
-                    pcall(function()
-                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
-                            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-                                if v.Name == "Generator" and v:FindFirstChild("iskiddedfromneptz") then
-                                    v.iskiddedfromneptz:Destroy()
-                                end
-                            end
-                        end
-                    end)
-                    break
-                end
-            end
-        end)
-    end
-})
-
--- Generators: Nametags
-GeneratorsGroup:AddToggle("GeneratorsNametags", {
-    Text = "Generators Nametags",
-    Default = false,
-    Callback = function(bool)
-        _G.generatorstag = bool
-        task.spawn(function()
-            while task.wait() do
-                if _G.generatorstag then
-                    pcall(function()
-                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
-                            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-                                if v.Name == "Generator" and not v:FindFirstChild("nametag") then
-                                    local bb = Instance.new("BillboardGui", v)
-                                    bb.Size = UDim2.new(4, 0, 1, 0)
-                                    bb.AlwaysOnTop = true
-                                    bb.Name = "nametag"
-                                    local text = Instance.new("TextLabel", bb)
-                                    text.TextColor3 = Color3.fromRGB(255, 255, 255)
-                                    text.TextStrokeTransparency = 0
-                                    text.Text = "Generator (" .. (v:FindFirstChild("Progress") and v.Progress.Value or 0) .. "%)"
-                                    text.TextSize = 20
-                                    text.BackgroundTransparency = 1
-                                    text.Size = UDim2.new(1, 0, 1, 0)
-                                elseif v:FindFirstChild("nametag") and v.Name == "Generator" then
-                                    if v:FindFirstChild("Progress") then
-                                        v.nametag.TextLabel.Text = "Generator (" .. v.Progress.Value .. "%)"
-                                    end
-                                end
-                            end
-                        end
-                    end)
-                else
-                    pcall(function()
-                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
-                            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-                                if v.Name == "Generator" and v:FindFirstChild("nametag") then
-                                    v.nametag:Destroy()
-                                end
-                            end
-                        end
-                    end)
-                    break
-                end
-            end
-        end)
-    end
-})
-
--- Auto Complete Generator
-local generatorsDid = {}
-local activelyAutoing = false
-GeneratorsGroup:AddToggle("AutoCompleteGenerator", {
-    Text = "Auto Complete Generator",
-    Default = false,
-    Callback = function(bool)
-        _G.instantGenerator = bool
-        task.spawn(function()
-            while _G.instantGenerator and task.wait() do
-                if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
-                    pcall(function()
-                        for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-                            if not generatorsDid[v] and v.Name == "Generator" and v:FindFirstChild("Scripts") and v.Scripts:FindFirstChild("Client") then
-                                generatorsDid[v] = true
-                                local old; old = hookfunction(getsenv(v.Scripts.Client).toggleGeneratorState, function(a)
-                                    if checkcaller() then return old(a) end
-                                    if not _G.instantGenerator then return old(a) end
-                                    if a ~= "enter" then return old("leave") end
-                                    local ou = v.Remotes.RF:InvokeServer("enter")
-                                    if ou ~= "fixing" then return end
-                                    activelyAutoing = true
-                                    for i = 1, 4 do
-                                        if v.Progress.Value >= 100 then break end
-                                        game.StarterGui:SetCore("SendNotification", { Title = "generator", Text = tostring(i), Duration = 9 })
-                                        v.Remotes.RE:FireServer()
-                                        task.wait(1.2)
-                                    end
-                                    activelyAutoing = false
-                                    return ""
-                                end)
-                            end
-                        end
-                    end)
-                end
-            end
-        end)
-    end
-})
-
--- Auto Start Generator
-GeneratorsGroup:AddToggle("AutoStartGenerator", {
-    Text = "Auto Start Generator",
-    Default = false,
-    Callback = function(bool)
-        _G.autoGen = bool
-        task.spawn(function()
-            while _G.autoGen and task.wait() do
-                if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
-                    pcall(function()
-                        for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-                            if v.Name == "Generator" then
-                                pcall(function ()
-                                    local function continue()
-                                        if game.Players.LocalPlayer.PlayerGui:FindFirstChild("PuzzleUI") then return end
-                                        if activelyAutoing then return end
-                                        if v.Main:FindFirstChild("Prompt") then
-                                            fireproximityprompt(v.Main.Prompt)
-                                        end
-                                        task.wait(1)
-                                    end
-                                    local hello = v.Positions.Center.Position
-                                    local hello2 = v.Positions.Right.Position
-                                    local hello3 = v.Positions.Left.Position
-                                    local lp = game.Players.LocalPlayer
-                                    if not lp.Character or not lp.Character:FindFirstChild("HumanoidRootPart") then return end
-                                    local pos = lp.Character.HumanoidRootPart.Position
-                                    if (pos - hello).Magnitude <= 4 then
-                                        continue()
-                                    elseif (pos - hello2).Magnitude <= 4 then
-                                        continue()
-                                    elseif (pos - hello3).Magnitude <= 4 then
-                                        continue()
-                                    end
-                                end)
-                            end
-                        end
-                    end)
-                end
-            end
-        end)
-    end
-})
-
--- Complete Active Generator
-GeneratorsGroup:AddButton({
-    Text = "Complete Active Generator",
-    Func = function()
-        if activelyAutoing then return end
-        pcall(function()
-            if not (workspace.Map and workspace.Map.Ingame and workspace.Map.Ingame.Map) then return end
-            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-                if v.Name == "Generator" then
-                    pcall(function ()
-                        if game.Players.LocalPlayer.PlayerGui:FindFirstChild("PuzzleUI") then
-                            local hello = v.Positions.Center.Position
-                            if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - hello).Magnitude <= 21 then
-                                for i = 1, 4 do
-                                    if v.Progress.Value >= 100 then break end
-                                    if activelyAutoing then return end
-                                    if not game.Players.LocalPlayer.PlayerGui:FindFirstChild("PuzzleUI") then break end
-                                    game.StarterGui:SetCore("SendNotification", { Title = "generator", Text = tostring(i), Duration = 9 })
-                                    v.Remotes.RE:FireServer()
-                                    task.wait(1.2)
-                                end
-                            end
-                        end
-                    end)
-                end
-            end
-        end)
-    end
-})
-
--- Complete All Generators
-GeneratorsGroup:AddButton({
-    Text = "Complete All Generators",
-    Func = function()
-        if activelyAutoing then return end
-        pcall(function()
-            if not (workspace.Map and workspace.Map.Ingame and workspace.Map.Ingame.Map) then return end
-            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-                if v.Name == "Generator" then
-                    pcall(function ()
-                        if v.Progress.Value >= 100 then return end
-                        local function checkOccupance(pos)
-                            if not (workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors")) then return false end
-                            for _, sv in pairs(workspace.Players.Survivors:GetChildren()) do
-                                if sv:FindFirstChild("HumanoidRootPart") then
-                                    if sv ~= game.Players.LocalPlayer then
-                                        if (sv.HumanoidRootPart.Position - pos).Magnitude <= 6 then
-                                            return true
-                                        end
-                                    end
-                                end
-                            end
-                            return false
-                        end
-                        local centerOccupied, rightOccupied, leftOccupied =
-                            checkOccupance(v.Positions.Center.Position),
-                            checkOccupance(v.Positions.Right.Position),
-                            checkOccupance(v.Positions.Left.Position)
-                        if centerOccupied and rightOccupied and leftOccupied then return end
-                        if not centerOccupied then
-                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.Positions.Center.CFrame
-                        elseif not rightOccupied then
-                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.Positions.Right.CFrame
-                        else
-                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.Positions.Left.CFrame
-                        end
-                        task.wait(0.2)
-                        v.Remotes.RF:InvokeServer("enter")
-                        for j = 1, 4 do
-                            if v.Progress.Value >= 100 then break end
-                            if activelyAutoing then return end
-                            game.StarterGui:SetCore("SendNotification", { Title = "generator", Text = tostring(j), Duration = 9 })
-                            v.Remotes.RE:FireServer()
-                            task.wait(1.2)
-                        end
-                    end)
-                end
-            end
-        end)
-    end
-})
-
--- Aimbot
-local aimbotHeld = false
-local uis = game:GetService("UserInputService")
-uis.InputBegan:Connect(function (i)
-    if i.UserInputType == Enum.UserInputType.MouseButton2 then
-        aimbotHeld = true
-    end
-end)
-uis.InputEnded:Connect(function (i)
-    if i.UserInputType == Enum.UserInputType.MouseButton2 then
-        aimbotHeld = false
-    end
-end)
-AimbotGroup:AddToggle("Aimbot", {
-    Text = "Aimbot",
-    Default = false,
-    Callback = function (bool)
-        _G.aimbot = bool
-        if bool then
-            game.StarterGui:SetCore("SendNotification", { Title = "aimbot enabled", Text = "aimbot is now on you can now hold right click to lock onto a survivor or the killer", Duration = 9 })
-        end
-        task.spawn(function()
-            while _G.aimbot do
-                if aimbotHeld then
-                    local cam = workspace.CurrentCamera
-                    if isKiller then
-                        local mouse = game.Players.LocalPlayer:GetMouse()
-                        local x, y = mouse.X, mouse.Y
-                        local v = getClosestSurvivorToMouse(x, y)
-                        if v then
-                            local root = v.HumanoidRootPart
-                            cam.CFrame = CFrame.new(cam.CFrame.Position, root.Position)
-                        end
-                    elseif isSurvivor then
-                        if killerModel and ({cam:WorldToViewportPoint(killerModel.HumanoidRootPart.Position)})[2] then
-                            cam.CFrame = CFrame.new(cam.CFrame.Position, killerModel.HumanoidRootPart.Position)
-                        end
-                    end
-                end
-                task.wait()
-            end
-        end)
-    end
-})
-
--- Killers ESP
-KillersGroup:AddToggle("KillerESP", {
-    Text = "Killer ESP",
-    Default = false,
-    Callback = function(bool)
-        _G.killers = bool
-        task.spawn(function()
-            while task.wait() do
-                if _G.killers == true then
-                    if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers") then
-                        for _, v in pairs(workspace.Players.Killers:GetChildren()) do
-                            if not v:FindFirstChild("iskiddedfromneptz") then
-                                local hl = Instance.new("Highlight", v)
-                                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                                hl.Name = "iskiddedfromneptz"
-                            end
-                        end
-                    end
-                else
-                    if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers") then
-                        for _, v in pairs(workspace.Players.Killers:GetChildren()) do
-                            if v:FindFirstChild("iskiddedfromneptz") then
-                                v.iskiddedfromneptz:Destroy()
-                            end
-                        end
-                    end
-                    break
-                end
-            end
-        end)
-    end
-})
-
--- Survivors ESP + Coin Flip
-SurvivorsGroup:AddToggle("SurvivorESP", {
-    Text = "Survivors ESP",
-    Default = false,
-    Callback = function(bool)
-        _G.survivors = bool
-        task.spawn(function()
-            while task.wait() do
-                if _G.survivors == true then
-                    if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors") then
-                        for _, v in pairs(workspace.Players.Survivors:GetChildren()) do
-                            if not v:FindFirstChild("iskiddedfromneptz") then
-                                local hl = Instance.new("Highlight", v)
-                                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                                hl.Name = "iskiddedfromneptz"
-                                hl.FillColor = Color3.fromRGB(0, 0, 255)
-                            end
-                        end
-                    end
-                else
-                    if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors") then
-                        for _, v in pairs(workspace.Players.Survivors:GetChildren()) do
-                            if v:FindFirstChild("iskiddedfromneptz") then
-                                v.iskiddedfromneptz:Destroy()
-                            end
-                        end
-                    end
-                    break
-                end
-            end
-        end)
-    end
-})
-
-SurvivorsGroup:AddToggle("AutoCoinFlip", {
-    Text = "Auto Coin Flip",
-    Default = false,
-    Callback = function (cool)
-        _G.coin = cool
-        task.spawn(function ()
-            while _G.coin and task.wait(2.1) do
-                game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "CoinFlip")
-            end
-        end)
-    end
-})
-
--- Items ESP / Pickup
-ItemsGroup:AddToggle("ItemsESP", {
-    Text = "Items ESP",
-    Default = false,
-    Callback = function(bool)
-        _G.items = bool
-        task.spawn(function()
-            while task.wait() do
-                if _G.items == true then
-                    pcall(function()
-                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
-                            for _, v in pairs(workspace.Map.Ingame:GetDescendants()) do
-                                if v:IsA("Tool") and not v:FindFirstChild("iskiddedfromneptz") then
-                                    local hl = Instance.new("Highlight", v)
-                                    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                                    hl.Name = "iskiddedfromneptz"
-                                    hl.FillColor = Color3.fromRGB(0, 255, 255)
-                                end
-                            end
-                        end
-                    end)
-                else
-                    pcall(function()
-                        if workspace:FindChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
-                            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-                                if v:IsA("Tool") and v:FindFirstChild("iskiddedfromneptz") then
-                                    v.iskiddedfromneptz:Destroy()
-                                end
-                            end
-                        end
-                    end)
-                    break
-                end
-            end
-        end)
-    end
-})
-
-ItemsGroup:AddToggle("AutoPickUpNearItems", {
-    Text = "Auto Pick Up Near Items",
-    Default = false,
-    Callback = function (call)
-        _G.pickUpNear = call
-        task.spawn(function()
-            while _G.pickUpNear and task.wait() do
-                pcall(function()
-                    if isKiller then return end
-                    local items = {}
-                    if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
-                        for _, v in pairs(workspace.Map.Ingame:GetDescendants()) do
-                            if v:IsA("Tool") and v:FindFirstChild("ItemRoot") then
-                                table.insert(items, v.ItemRoot)
-                            end
-                        end
-                    end
-                    for _, itemRoot in pairs(items) do
-                        local lp = game.Players.LocalPlayer
-                        if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-                            local magnitude = (lp.Character.HumanoidRootPart.Position - itemRoot.Position).Magnitude
-                            if magnitude <= 10 then
-                                if itemRoot:FindFirstChild("ProximityPrompt") then
-                                    fireproximityprompt(itemRoot.ProximityPrompt)
-                                end
-                            end
-                        end
-                    end
-                end)
-            end
-        end)
-    end
-})
-
-ItemsGroup:AddButton({
-    Text = "Pick Up Available Items",
-    Func = function()
-        pcall(function()
-            if isKiller then return end
-            local items = {}
-            if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
-                for _, v in pairs(workspace.Map.Ingame:GetDescendants()) do
-                    if v:IsA("Tool") and v:FindFirstChild("ItemRoot") then
-                        table.insert(items, v.ItemRoot)
-                    end
-                end
-            end
-            for _, itemRoot in pairs(items) do
-                local toolName = itemRoot.Parent and itemRoot.Parent.Name
-                if toolName and not game.Players.LocalPlayer.Backpack:FindFirstChild(toolName) then
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = itemRoot.CFrame
-                    task.wait(0.5)
-                    if itemRoot:FindFirstChild("ProximityPrompt") then
-                        fireproximityprompt(itemRoot.ProximityPrompt)
-                    end
-                end
-            end
-        end)
-    end
-})
-
--- ========== Local Player Tab ==========
-local StaminaGroup = Tabs["Local Player"]:AddLeftGroupbox("Stamina")
-StaminaGroup:AddButton({
-    Text = "Infinite Stamina",
-    Func = function()
-        require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting).DefaultConfig.MaxStamina = 9999
-        require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting).DefaultConfig.StaminaLoss = 0
-        game.StarterGui:SetCore("SendNotification", { Title = "warning", Text = "this effect wont apply until next round, but you only have to press it once this entire session", Duration = 9 })
-    end
-})
-StaminaGroup:AddToggle("AlwaysSprint", {
-    Text = "Always Sprint",
-    Default = false,
-    Callback = function (call)
-        _G.alwaysSprint = call
-        task.spawn(function()
-            while _G.alwaysSprint and task.wait() do
-                local sprint = require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting)
-                if not sprint.IsSprinting then
-                    sprint.IsSprinting = true
-                    sprint.__sprintedEvent:Fire(true)
-                end
-            end
-        end)
-    end
-})
-
-local sprintSpeed = 26
-StaminaGroup:AddToggle("FastSprint", {
-    Text = "Fast Sprint",
-    Default = false,
-    Callback = function (call)
-        _G.fsprint = call
-        if call then
-            game.StarterGui:SetCore("SendNotification", { Title = "KICK WARNING", Text = "this feature can get you kicked, and is EXTREMELY risky!", Duration = 9 })
-        end
-    end
-})
-task.spawn(function ()
-    local sprint = require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting)
-    while true do
-        if _G.fsprint then
-            sprint.SprintSpeed = sprintSpeed
-        else
-            sprint.SprintSpeed = 26
-        end
-        task.wait()
-    end 
-end)
-StaminaGroup:AddSlider("SprintSpeed", {
-    Text = "Sprint Speed",
-    Default = 26,
-    Min = 26,
-    Max = 80,
-    Rounding = 0,
-    Callback = function (slid) sprintSpeed = slid end
-})
-
-local SpeedGroup = Tabs["Local Player"]:AddRightGroupbox("Speed")
-local yeahvariable = 0
-SpeedGroup:AddSlider("SpeedBypass", {
-    Text = "Speed (Bypass)",
-    Default = 16,
-    Min = 16,
-    Max = 100,
-    Rounding = 0,
-    Callback = function (s) yeahvariable = s end
-})
-SpeedGroup:AddToggle("SpeedToggle", {
-    Text = "Speed Toggle",
-    Default = false,
-    Callback = function (s)
-        _G.mhhmmm = s
-        task.spawn(function ()
-            local localPlayer = game:GetService("Players").LocalPlayer
-            while task.wait() do
-                if not _G.mhhmmm then break end
-                local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid")
-                if humanoid and humanoid.MoveDirection ~= Vector3.zero then
-                    localPlayer.Character:TranslateBy(humanoid.MoveDirection * yeahvariable * game:GetService("RunService").RenderStepped:Wait())
-                end
-            end
-        end)
-    end
-})
-
-local NoclipGroup = Tabs["Local Player"]:AddRightGroupbox("Noclip")
-NoclipGroup:AddToggle("EnableNoclip", {
-    Text = "Enable Noclip",
-    Default = false,
-    Callback = function (s)
-        if s == true then
-            game.StarterGui:SetCore("SendNotification", { Title = "KICK WARNING", Text = "you WILL get kicked if you are inside a wall for more than a second! only use for small shortcuts", Duration = 9 })
-        end
-        _G.nokia = s
-        local cachey = {}
-        task.spawn(function ()
-            local localPlayer = game:GetService("Players").LocalPlayer
-            while task.wait() do
-                if not _G.nokia then
-                    for _, v in pairs(cachey) do
-                        v.CanCollide = true
-                    end
-                    break
-                end
-                if localPlayer.Character then
-                    for _, v in pairs(localPlayer.Character:GetChildren()) do
-                        if v:IsA("BasePart") then
-                            cachey[v] = v
-                            v.CanCollide = false
-                        end
-                    end
-                end
-            end
-        end)
-    end
-})
-
-local InfJumpGroup = Tabs["Local Player"]:AddLeftGroupbox("Infinite Jump")
-InfJumpGroup:AddToggle("InfiniteJump", {
-    Text = "Infinite Jump",
-    Default = false,
-    Callback = function (s)
-        if s == false then
-            if _G.connection then _G.connection:Disconnect() end
-            return
-        end
-        _G.connection = game:GetService("UserInputService").JumpRequest:Connect(function ()
-            pcall(function ()
-                game.Players.LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-            end)
-        end)
-    end
-})
-
--- ========== Killer Tab ==========
-local KillerGroup = Tabs.Killer:AddLeftGroupbox("Killer")
-KillerGroup:AddToggle("AllowKillerEntrances", {
-    Text = "Allow Killer Entrances",
-    Default = false,
-    Callback = function (call)
-        _G.killerent = call
-        local function s9audioak()
-            if not (workspace.Map and workspace.Map.Ingame and workspace.Map.Ingame:FindFirstChild("Map")) then return end
-            local walls = workspace.Map.Ingame.Map:FindFirstChild("Killer_Only Wall") or workspace.Map.Ingame.Map:FindFirstChild("KillerOnlyEntrances")
-            if not walls then return end
-            for _, v in pairs(walls:GetChildren()) do
-                v.CanCollide = true
-            end
-        end
-        if not _G.killerent then
-            pcall(s9audioak)
-            return
-        end
-        task.spawn(function ()
-            while _G.killerent and task.wait() do
-                if (workspace.Map and workspace.Map.Ingame and workspace.Map.Ingame:FindFirstChild("Map")) then
-                    local walls = workspace.Map.Ingame.Map:FindFirstChild("Killer_Only Wall") or workspace.Map.Ingame.Map:FindFirstChild("KillerOnlyEntrances")
-                    if walls then
-                        if not _G.killerent then
-                            pcall(s9audioak)
-                            break
-                        end
-                        pcall(function ()
-                            if workspace.Map.Ingame.Map:FindFirstChild("KillerOnlyEntrances") then
-                                for _, v in pairs(workspace.Map.Ingame.Map.KillerOnlyEntrances:GetChildren()) do
-                                    v.CanCollide = false
-                                end
-                            end
-                        end)
-                    end
-                end
-            end
-        end)
-    end
-})
-
-KillerGroup:AddToggle("SpectateKiller", {
-    Text = "Spectate Killer",
-    Default = false,
-    Callback = function (state)
-        if state then
-            local killer = workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers") and workspace.Players.Killers:GetChildren()[1]
-            if killer then
-                workspace.CurrentCamera.CameraSubject = killer
-            end
-        else
-            pcall(function()
-                workspace.CurrentCamera.CameraSubject = game.Players.LocalPlayer.Character
-            end)
-        end
-    end
-})
-
-KillerGroup:AddButton({
-    Text = "Teleport To Killer",
-    Func = function ()
-        local killer = workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers") and workspace.Players.Killers:GetChildren()[1]
-        if killer then
-            pcall(function ()
-                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = killer.PrimaryPart.CFrame
-            end)
-        end
-    end
-})
-
-KillerGroup:AddButton({
-    Text = "Kill All [KILLER TEAM]",
-    Func = function()
-        if game.Players.LocalPlayer:GetNetworkPing() >= 0.3 then
-            return game.StarterGui:SetCore("SendNotification", { Title = "Kill all stopped", Text = "kill all stopped because your ping is too high. try getting better wifi and try again", Duration = 9 })
-        end
-        if not (workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors")) then return end
-        for _, v in pairs(workspace.Players.Survivors:GetChildren()) do
-            local name = v:GetAttribute("Username")
-            local plr = game.Players:FindFirstChild(name)
-            if plr then
-                local skipTimeout = tick()
-                while tick() - skipTimeout <= 15 do
-                    if game.Players.LocalPlayer:GetNetworkPing() >= 0.3 then
-                        return game.StarterGui:SetCore("SendNotification", { Title = "Kill all stopped", Text = "kill all stopped because your ping is too high. try getting better wifi and try again", Duration = 9 })
-                    end
-                    if game.Players:FindFirstChild(name) == nil then break end
-                    if plr.Character == nil then break end
-                    if plr.Character:FindFirstChild("Humanoid") == nil then break end
-                    if plr.Character.Humanoid.Health <= 0 then break end
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame
-                    game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "Slash")
-                    game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "Punch")
-                    task.wait()
-                end
-            end
-        end
-    end
-})
-
-KillerGroup:AddButton({
-    Text = "Teleport To Random Survivor",
-    Func = function()
-        pcall(function()
-            if not (workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors")) then return end
-            local survs = workspace.Players.Survivors:GetChildren()
-            if #survs == 0 then return end
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = survs[math.random(1, #survs)].HumanoidRootPart.CFrame
-        end)
-    end
-})
-
--- ========== Teleport Tab ==========
-local GensTP = Tabs.Teleport:AddLeftGroupbox("Generators")
-for i = 1, 5 do
-    GensTP:AddButton({
-        Text = "Teleport To Generator " .. i,
-        Func = function ()
-            pcall(function ()
-                if not (workspace.Map and workspace.Map.Ingame and workspace.Map.Ingame.Map) then return end
-                local gens = {}
-                for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-                    if v.Name == "Generator" then
-                        table.insert(gens, v)
-                    end
-                end
-                if gens[i] and gens[i]:FindFirstChild("Positions") and gens[i].Positions:FindFirstChild("Center") then
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = gens[i].Positions.Center.CFrame + Vector3.new(0, 10, 0)
-                end
-            end)
-        end
-    })
-end
-local ItemsTP = Tabs.Teleport:AddRightGroupbox("Items")
-ItemsTP:AddButton({
-    Text = "Teleport To Random Item",
-    Func = function ()
-        local items = {}
-        pcall(function ()
-            if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
-                for _, v in pairs(workspace.Map.Ingame:GetDescendants()) do
-                    if v:IsA("Tool") then
-                        table.insert(items, v)
-                    end
-                end
-            end
-        end)
-        if #items > 0 and items[1]:FindFirstChild("ItemRoot") then
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = items[math.random(1, #items)].ItemRoot.CFrame + Vector3.new(0, 10, 0)
-        end
-    end
-})
-
--- ========== Misc Tab ==========
-local MiscGroup = Tabs.Misc:AddLeftGroupbox("Miscallenous")
-MiscGroup:AddToggle("AllowJump", {
-    Text = "Allow Jump",
-    Default = false,
-    Callback = function (s)
-        _G.mhhmmm2 = s
-        if s then
-             game.StarterGui:SetCore("SendNotification", { Title = "KICK WARNING", Text = "WARNING jumping repeatedly will KICK YOU because the game will think you are flying!", Duration = 9 })
-        end
-        task.spawn(function ()
-            local localPlayer = game:GetService("Players").LocalPlayer
-            while task.wait() do
-                if not _G.mhhmmm2 then break end
-                local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid")
-                if humanoid then
-                    humanoid.JumpPower = 50
-                end
-            end
-        end)
-    end
-})
-MiscGroup:AddButton({
-    Text = "No Fog",
-    Func = function ()
-        for _,v in pairs(game.Lighting:GetDescendants()) do
-            if v:IsA("Atmosphere") then
-                v:Destroy()
-            end
-        end
-        game.Lighting.FogEnd = 999999
-    end
-})
-MiscGroup:AddButton({
-    Text = "Kill Yourself",
-    Func = function ()
-        pcall(function ()
-            game.Players.LocalPlayer.Character:BreakJoints()
-        end)
-    end
-})
-MiscGroup:AddButton({
-    Text = "Rejoin",
-    Func = function ()
-        pcall(function ()
-            game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.localPlayer)
-        end)
-    end
-})
-
-local PopupsGroup = Tabs.Misc:AddRightGroupbox("Popups")
-PopupsGroup:AddToggle("AutoRemove1x1x1x1", {
-    Text = "Auto Remove 1x1x1x1 popups",
-    Default = false,
-    Callback = function (bool)
-        _G.no1x= bool
-        task.spawn(function ()
-            while _G.no1x and task.wait() do
-                local temp = game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TemporaryUI")
-                if temp and temp:FindFirstChild("1x1x1x1Popup") then
-                    temp["1x1x1x1Popup"]:Destroy()
-                    warn("yes its gone")
-                end
-            end
-        end)
-    end
-})
-
-local EmoteGroup = Tabs.Misc:AddRightGroupbox("Emote As Killer")
-local emoteName = "AICatDance"
-local emoteTable = {}
-for _, v in pairs(game:GetService("ReplicatedStorage").Assets.Emotes:GetChildren()) do
-    table.insert(emoteTable, v.Name)
-end
-table.sort(emoteTable)
-EmoteGroup:AddDropdown("EmoteDropdown", {
-    Values = emoteTable,
-    Default = emoteName,
-    Multi = false,
-    Text = "Select Emote (must own)",
-    Callback = function(e) emoteName = e end
-})
-EmoteGroup:AddButton({
-    Text = "Play Emote",
-    Func = function ()
-        game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("PlayEmote", "Animations", emoteName)
-    end
-})
-
--- Logger (left as-is)
-if not getgenv().noLogging then
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/NeptX/refs/heads/main/Logger.lua"))()
-end
-
--- ========== UI Settings / Managers ==========
-local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu", "wrench")
-MenuGroup:AddToggle("KeybindMenuOpen", {
-    Default = Library.KeybindFrame.Visible,
-    Text = "Open Keybind Menu",
-    Callback = function(value)
-        Library.KeybindFrame.Visible = value
-    end,
-})
-MenuGroup:AddToggle("ShowCustomCursor", {
-    Text = "Custom Cursor",
-    Default = true,
-    Callback = function(Value)
-        Library.ShowCustomCursor = Value
-    end,
-})
-MenuGroup:AddDropdown("NotificationSide", {
-    Values = { "Left", "Right" },
-    Default = "Right",
-    Text = "Notification Side",
-    Callback = function(Value)
-        Library:SetNotifySide(Value)
-    end,
-})
-MenuGroup:AddDropdown("DPIDropdown", {
-    Values = { "50%", "75%", "100%", "125%", "150%", "175%", "200%" },
-    Default = "100%",
-    Text = "DPI Scale",
-    Callback = function(Value)
-        Value = Value:gsub("%%", "")
-        local DPI = tonumber(Value)
-        Library:SetDPIScale(DPI)
-    end,
-})
-MenuGroup:AddLabel("Menu bind"):AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = "Menu keybind" })
-Library.ToggleKeybind = Library.Options.MenuKeybind
-
--- Managers
-ThemeManager:SetLibrary(Library)
-SaveManager:SetLibrary(Library)
-SaveManager:IgnoreThemeSettings()
-SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
-ThemeManager:SetFolder("NXP_Hub")
-SaveManager:SetFolder("NXP_Hub/Forsaken")
-SaveManager:SetSubFolder("Forsaken-Place")
-SaveManager:BuildConfigSection(Tabs["UI Settings"])
-ThemeManager:ApplyToTab(Tabs["UI Settings"])
-ThemeManager:ApplyTheme("Tokyo Night")
-SaveManager:LoadAutoloadConfig()
+-- After the last retard skidded, that was the last straw. I've decided to obfuscate this script. If you still request the source code you can dm on discord @neptunescripts and i will gladly give you it
+return({__NXP=[[ NxpSec Obfuscation // v3.0.5 ]]and(function(_,_1_l,_1l11,l_,_11l1,_l1,_1l_1_,l1,l1_,_1_,...)local _1_1=nil;local _='\116\111\115\116\114\105\110\103';local _1=_ENV;if(not(_1~=nil))then _ENV=getfenv()_1=_ENV end;local _l=_1[_]_1[_]=function(ll)ll=_l(ll)local _=1;local _1={}while(_<=#ll)do if(_>#ll)then break;end;local ll=l_(ll,_,_)local ll=_1_l(ll)if(ll==255)then _gYMh8ky4a4B=true;end if(ll==1)then while true do _1._=function(_,ll)return((_)and(_)((ll)and(ll)or(_)))end;end else _l1(_1,_1l11(ll))end _=_+1 end return _11l1(_1)end local _11=(unpack)or((table).unpack);local _=(tonumber);local __=_1._ local function ll_(...)return{...},_1_('#',...)end local l11,_l,_1l,_1l_1,l1_ll,_111l,_11_,l1_1 local ll=1;local l__1;local l1_l;local _1l_,___=function(l11)local ll,_1,_l="","",{}local _11=256;local l={}for _=0,_11-1 do l[_]=string.char(_)end;local _=1;local function __()local ll=tonumber(string.sub(l11,_,_),36)_=_+1;local _1=tonumber(string.sub(l11,_,_+ll-1),36)_=_+ll;return _1 end;ll=string.char(__())_l[1]=ll;while _<#l11 do local _=__()if l[_]then _1=l[_]else _1=ll..string.sub(ll,1,1)end;l[_11]=ll..string.sub(_1,1,1)_l[#_l+1],ll,_11=_1,_1,_11+1 end;l1_l=table.concat(_l)end,function(ll,_)local _1=('');local _=0;while((_)<=(#ll))do _=(_+(1));if(_>#ll)then break;end;_1=_1..string.char((bit32.bxor)(string.byte(ll,_,_),37)%(256));end;return _1;end local l=0;local _1l_l local function l_1()if(not((l==0)==false))then repeat _1l_(___(__));function l__1(_1_l)__=_1_l local l;local _11={};local __={};local _l1={};local _1={}local _={[1]=function(_)while(not(_==nil))do return l__1(_);end end;[2]=function(_)if(_==1)then return(not(_1l()<1));elseif(_==0)then return l1_ll();elseif(_==3)then return _111l();end;end;[3]=function(_11,l)local _={}for ll=1,2 do _[ll]=_1l_1();if(ll>2)then break;end;end local ll={[0]=function()_[3]=_1l_1();_[4]=_1l_1();end;[1]=function()_[3]=_l();end;[2]=function()_[3]=_l()-(2^16);end;[3]=function()_[3]=_l()-(2^16);_[4]=_1l_1();end;}for _=0,3 do if(_==_11)then ll[_]();end end local _11,_l,ll=_[2],_[3],_[4];local _1={function()_[2]=_1[_11]end;function()_[3]=_1[_l]end;function()_[4]=_1[ll]end;};local ll=0;while true do ll=ll+1 if(ll~=1)and(ll~=2)and(ll~=3)then break;end;if(l11(l,ll,ll)==1)then _1[ll]()end;end return _;end;}function l(ll,...)return(_[ll](...));end local ll={_11,__,nil,_l1};_.b=_l()_.a=1;while(_.a<=_.b)do if(_.a>_.b)then break;end;_1[_.a]=l(2,_1l());_.a=_.a+1 end;ll[3]=_1l();for _=1,_l()do __[_-1]=l(1,_1_l);end;for ll=1,_l()do local _=_1l();if(l11(_,1,1)==0)then _11[ll]=l(3,l11(_,2,3),l11(_,4,6));end end;return ll;end;_1_l=string.byte _1l11=string.char l_=string.sub _11l1=table.concat _l1=table.insert _1l_1_=math.ldexp l1=getfenv l1_=setmetatable _1_=select _1_1=(bit32.bxor)l=1;while((l>=1)==true)do if(l<2)then local _=30 if(_>29)then function l11(_1,ll,_l)_=29 if(_>28)then if _l then _=27 if(27>=_)then local ll=(_1/2^(ll-1))%2^((_l-1)-(ll-1)+1);if(_~=27)then else return ll-ll%1;end end else _=26 if(26==_)then local ll=2^(ll-1);_=25 if(26>_)then return(_1%(ll+ll)>=ll)and 1 or 0;end end end;end end;end l=3 end;if(false~=(3==l))then function _l()local _=0 if(_==0)then local _1={a=16777216;b=65536;c=256;}_=1 if(1==_)then local function l(_)return(ll+_)end;_=2 if(_==2)then _1.d={};_=3 if(3==_)then for ll=1,4 do _=4 if(4~=_)then break;end;_1.d[ll]=_1_l(__,l(ll-1),l(ll-1))end local _l=4 while(_l>=_)do ll=l(_l);_=3 if(_<_l)then _1.e=(_1.d[_l]*_1.a)+(_1.d[3]*_1.b)+(_1.d[2]*_1.c)+_1.d[1];_=(_l-1)repeat local _={rawget;_1_l('a')};if(not(false))then return(_[1]({a=_1.e;},_1l11(_[2])))end until(_l~=_l)end end end end end end end;l=4;end;while(l~=5)do local _=0 while(_~=99)do repeat _=2 until(2>=_)if(_==2)then local function _1(ll,_1)return(ll==_1);end _=3 if(_1(_,3))then function _1l()local _=1 if(_<2)then local _1=_1_l(__,ll,ll);_=_+1 while(_>=1)do ll=ll+1;return _1;end end end;l=6;((l==6)and(function(_)_1l_1=(_);end))((function()local _=5 if(_==5)then local l,_l=_1_l(__,ll,ll+2);_=4 if(4==_)then ll=ll+2;_=3 if(_1(3,_))then return(_l*256)+l;end end end end))end else return end break end break end function l1_ll()local _=1 if(_==1)then local _1_l,_11,__,l,ll,_1 _=2 local _1l_1=nil if(2==_)then if(_1l_1~={})then local _=0 if(_==0)then _1_l=_l();end _=1 if(_==1)then _11=_l();_=2 repeat __=1;_=3 if(4~=_)then l=(l11(_11,1,20)*(2^32))+_1_l;_=4 if(5>_)then ll=l11(_11,21,31);_1=((-1)^l11(_11,32));else return end end until(true)else return end end _=3 if(4>_)then if(ll==0)then _=4 while(_~=5)do if(l==0)then return _1*0;else ll=1;__=0;end;_=5 break;end elseif(ll==tonumber'\50\48\52\55')then return(l==0)and(_1*(1/0))or(_1*(0/0));end;return _1l_1_(_1,ll-tonumber'\49\48\50\51')*(__+(l/(2^52)));end end end end;_11_=_l;function _111l(_)local _1;if(not _)then _=_11_();if(_==0)then return'';end;end;_1=l_(__,ll,ll+_-1);ll=ll+_;local ll={}for _=1,#_1 do ll[_]=l_(_1,_,_)end return _11l1(ll);end;l1_1=_l;local _=100 if(_>=100)then local ll=function(ll)local _1='[NXP] You have tampered with the obfuscator! Please don\'t try this again, and execute the script as normal. code: 'return(_1)..ll;end _=99 if(_<100)then local l={q=ll('1_script_beautified')}_=98 if(_>=98)then((function()_=97 if(not(_~=97))then return function(ll)local _l=ll.w local ll=_ if(ll>=_)or(ll<=_)then local _1={string.match(_l(),':(%d+)');[3]=(function()return(nil);end)();}ll=ll-1 if(ll>(_-3))then _1[2]=string.match(_l(),':(%d+)');local _l=nil;ll=1 if(2>ll)then if(nil==_l)then local _=0;while(_==0)do for ll=1,(#_1)do _l=_1[ll];break;end _=1;end if(_<2)then if(_1[1]~=_1[2])and(_==1)then repeat error(l.q)until not(_l);end end end end end end end end end)()){w=debug.traceback;}end end end return(function(_)return _()end)(_1l_l(l__1(l1_l),{},l1()));end break until nil;end;end __="pduv}sgas`dbnprs}|rormafcgm`lbohibdaodmcpngippspqppkpjdotkob`spwlm`gdl}`aladhopmbft`np}mtvsprbrodu`dro`nojodvlpdpamqdtd`hpbhbbkpdvodrmjmnmdkgugw|dl|dibudnbggcmaohspgftfvbfwfpgbgj`dvffumg}bdglpgsgspd`aadpfrbhg|pd|bgifuwgjifnasgudfgm`dgg}ffaajgdi`jguawlfkmdm``bk}pasgfmaofsf`dkgqj|`sfwgcoacgl`odafi`ig`w`ic}fdcldacfdcc|caca`aia`cgmd`caocaocawfch`hcoopd|majfwla`gfgcbajgupw`bh```ofuflpdrdrgbgdfagaagooaddfmdghdibcoavbarlbmbpfrc`mbjmpcf`va}`uak`nc|dudkggff}apbcfn`mocijo`aldrfsmlgfod|bol`f}bdfsl``cmplm`ojdngcldkfmofm}llbluslwlgompdhpodfmgundnbgmknfmodn`jn`pfml`mo}bpbqpnqdjfqbnmnalbtom|bdgcoiunbmbi`dbopiltilcodgobr`rlngdkgkatlbtamoas`oipalbglfj|prp`tnncnuhoignmlkoabumbnc`nboc|h}`d}jibkdq``komkbwnfhhiokmoonipm`cqotbilocbjfcarm}ditks`loas`ppbn|idinmhiosjfaam}j`fb`fmcclgufodukjcgofkpajcnjaaadldganwhu|lkojabnf}ginouajdu`qf}nsvubbuo}odimiiruuvuffuiinh`mgouru|aikpcgwnasfohpwbclbcbovithhjgtmkdnohpm`rbbkbu|dut`ijugt}hbtkmgi`wtsnjwotgrf}nnwfsgiujiwltvttpwrccdahfwshfggatnbumdoldkgt|cbtwiww}jjbgfnkbugvdwnfmwnrivl|vnquwgdumvdcmuovfndka|qn`qvqolcbngmkthbjviqncnrqpqsqrqpdqptqrbrgdqrart}wrdcmouphrprvqtnbuwssaspparrrrmpmrsprvrrwsbrrqsqtpsar}rqurbvrar`}p`usuldrsshrcrrg}rkpu}p}qvslutrvptwr|ws|stsvspsrs|plrrrrrrgrarcrmroriwrkrurwrqrsrr}r}b}|v}r}}g}a}cq}mb}n}w}q}sakrowkr}||sgpqlnfksmrnabubp}|csqsss}s|ir}||jrdrfwr`rbrlrnrhsh|rvrprrr|}}rd}}d}f}`}brm}nroqsj}drv}i}pqrr`hggrprpadugamaagrfg|shri}dmoqr}hmrpo}qrs}j}dt}krtrvdr|f}mbqgv}|vsapmma`ic}dothjtvfdspirsrs|mvd|gs}d}vqr|gt}ugplgg}trf}dukagfrcpg}puwhsv}ggupfvdsrqrclr}ap}fpi|ppotr``|bsrskhjvtfrprs}pvwgacficaainm|omn}p}gq|d}skbgpgsrnrstshm`o|ar}gpsippvdkwvdkdvfqaopwqff|dd|rgdlpdl`o|grtuapdrng|g}rvskdf`fqrvshogipgmsf`v}pomstrglfssf}fh|nm|rpsmfpgicgvqpsitjguwpsdgfp}qriagfbfo|cr`c``rs|rfrhcd|wmkitnwp|}ckfrs`pogrhgmrfrkf}t`vikatavapargffpf}`d|dl|rf}fqdgasobbaifss|acrpsl}gvcsvmcrmdmfbdraj}vfvsuftsblmmbc|lup|aolc}mtpll}f}ian}q}`|rvrmlskpglu`lvlrblslblljrg|atlonoroduofrorkulwlqrbq|}}oo`ojl|msorrqfohnbhd`mabo}s`usth}qnb|nod`nknupq}imh}`|}cpns}q}sv`bffmniimpmomgf|gblbnshiomitiv}likmfjqlu}`l|}jmaom`lrhhgcibuiobbbjpp`iolalrnlarqhubtqhahrrhpkrkf}nkkgqd|rvk`hia}d|lvbi}rpirbooksogugggrgppoirhjdjfajcldwhdsd`|sj`jbiujscjhj|b}fghdssklitjkmj`q}|jdua}ucumagoujufjtfdshodpoupduhi`uguoubvpapf}m`ttft`upfdtjtmdsttbm|htrt}mgfgwhdfuhigkjqawwjlwg|rbw`wbjlnkjjr|ulwuljwqwsobjggiiigsftpaanfgrvmomrfvdtbwq|}sqvaoufvt|nvplfmfnwrvpdbgfgqngqo}dw}qic`fcqfooibrdgr}ai|biupjwupndsqdusqpqq}okshrkqflpbrqifnktpuluu}hm}rvpmbcvavvfud`q`vcwvwpfufahbmwmibqfsblrspdrq|gofnuucomqpfafrrtharrrbrrrrfos}f}vr}rnqp`vpsmrrgnodp}tsqoqnlvvvodshdrrwvbwrj`vgtn`sivwiflhoaglagofjairsiriwlruq|sr|ddr`m}vgdff}ppidq|}mo|a}nrsqam|d`rwgr|s}ikvsldicsmmpsgcagugblnfkr|rmvngrosa|vngkrbgaj|rca|`fmmtvaggdrg}qpkvsibqapnifwvuihv|rfmh`}i|cvvmgs`jvqjlscpv|nn`}s}}pr|msdakau}ac}r|aljr|c|vciamfgn|agaf}dmardad`|bbjaggvohoai|fm`posulaidaklg|tfibkv}s}|wapspr}jlwrvdmhf}d`anhonalfsswpqabwldfqnksfvgbbm}wg|mhkcftcpuwnncnsuhfatunnoq`fvi}rsao}r|iqabgsotblrhjjmahrjvr|patdkdwjliswcblwfqbdvsg|gv|ssnmhfsgcdgr|fsgajgbaosijdlbch|}hbldkrdwvdf}dr|ginmjtdndhqprmu}rdadcdfhdaogirdq}dwg`dwdgckdgdd`dbg`gtp}dkfdddsfgsdigdlidiffcdtgwffo|mhgqupdfgqi|dcfisdfafomfhfdcdifadfbdwamalaag|ddcakgitggqqadf`qgndkgodi`idoai`n`fdgl|ghfp`c`a`pfvag|fdr}gshpnotm|scot}uwkvg}}mhvf}}}d}}klcj}w}quln`q`msrmpaho|lojmgvcwg|}lodw`fgssk|fpdlpwalmaiuagpfdwhlakrdaggggjdkdparfp}frdkmagdtmndkobmlaicbvmhls`frdimslaulmhogkpragormgfsdm`gd`mlp}ggdgfp}`}f`}}p}tgsp}onlhl|ll}odhoddaksdoowbbvojmofod`wo`gnilqohnhoakodk`ogq}pwoldcpwpwmsnufdgsntmn`dpw`vgngop}fiigmkhfpfilbqdkmmdkimmkij`apadp|vdocgcaccsaorbl}qcklorfbucn}cbi`mhbh}qpbhc}hoj}j}t}vvblb`bdwnipbcoagggtbigscvd|ok|cfpsu`onohoss|vcsh}wblvqsssjjkv`v|shgaabm}gpisapicmrbpggqdqgujrovmwdchudddmnmwmpnp}qffjtnnln}`afuumup}mwdoipwfroiullgowdwuhnpujutdwuvbvp}holanpucnpn|frn|gtonpnpwfwubtlqslrmgorddinsa|dwrqlhfrllu|wgnlhw`wvglfwjudwtpf`troqulakdrhmldgdigflvaiwslhdct}aogstotwthdmowomddld`|fqwqowamjgsmmhqdtmdaof`maowmvqdcvvlagsaolobgstllkmlvtdsuqgwnvcwbmdgtmuiodwpmvagnaqwbqbubbkp}rdplpsghgmjisp`|cnhvwc}jasoni`hkksgrdgvcgnmfd}mlasltpgqssssagdkigmmbhcaa|hamjddcsmagjgpirdgrad`rclrcrnp|cotbbcfc`cboclhlchhisfoblhqclckh}bbjbbplskh}iadbn`q`mpnkcrojbv}mhdb}mjrrcdigwpo|nk|hk|u|v|vdtnjgabfubbcof}`gskfoshcmh|dpjttwdknu}siswtc||ot`tvr`d}bpjtwiqgbruktvdgqam`arhmmrnqlvlgqmqrndwld|ddwgioawmdwhgqjntdvqgbis}dltj`bndimlnovlkmqadsapiovwlrdclgg|nhljaiiwrnaninboqgtdlp}jp|obd`rdoilqpwtvuiowhpwtmthpwvomnptbp}imgngoiqipwlauokqsdrmoqrjvtnpfgtstwvnno`nnmd`f`bovlpp}wbllnowpaojmitqpdldoonpm`jdfdwln`dddmddgp|t}rd}dsdfubcntibwmprlbgnrmt}h}ahbcoifcihnh}}o|gjfnkkgoc|f}b}qw}sfbl}|ng|||}|w||gmhmjpqadwvufslniktgamus|lhmqushuplvvdcaiabpcdkssrjiqtg`pw}o}twdd|jfbtlgiaanvow`lp}wvwwlokhpnlqip}vf}vfflsqotoilkp}j|fbfllvdwflirs}|fsb|gflavdp}ussmhvddaimnms`trdaflgdgd`|gfdslnslffbp|dgvdglclkfprrmtrgrajl}lb|`adsgroactrkrtrorqcdfsmfgcldoic}k}d}fhw}bscuuw}hl}j}t}vhigl`rbskmhkfsho|a|vd}jmulpqfsa}}dddstdddfupbcrp|jndf`j}`gsi`jkchnuwqsdw}pfqq`fodsi}fvihr`dq`fhsa}nmpm}g|irrcnc}dupbcpsbtcagccvwtdkdd}uatuftbv|jbrbjngufpbbsngpdughbk}fdkmoadwmgbd}ngrgm`m`slqctl`p}cdwcfhovpqkoup}milgap}somopnpdglqllnimbmdtmwoogrhok|osd|ovhrpwfrdunpfatlaow}oohlbnqnklrgkabmm`pwwgigpafrggphcnhnunmfnplkgospwottocclbmgwhsblmohubqimpjhgs`fdlikvdiplroad}ospdkjowsbpwrdn|il`ivpwfcmtgp`nkoqo`womwlk|nqwonspwmodklunlblogkipkfo}nkflpvlaqkigkdvkmbqk`doqlp}obopwipdkikdcnm`fofhdkn|oaojrdcl`ljnd`h}ghcmja}w}}idr}u}cij}h|`d}}ailrkvau}kvkbudwcbicbjqumcdrusmlbgbiqmpupbqu|gibnm}tatk|mdvdtnaitdk}mt}mvmptq|mqm|mmlqlmg}l`hflddwwkl`kh}vntwfluwgwovsddnddndapvjogkfjkdnlsrpmgfvdwogklkd}brdt`gg}gfgtumogodwgi}gcvhg`vrn}gkg`gugwvsgprg}ogs`frjjwftk|}raqoalcojrlcfmrhbbcrrfqogqiahfhcfjrsjjvt}cqhouj}k}f}tmhppanoauafkfmcualcanmcqhdpapg}lmhush}luhdt`hhpru}ilrsfk|t|q}oor`ahtpkvtig|qmcqn}|tg|d`pfkvrfrf}dd|wrfrbppfic}fppjt`fcjcwd|nadwtqdogc``sbshkonifb|gk}d|bbfqdclcnhor`pshorblsoup|dsro}icirubobkfcpac|j|uwwgfvtdiwlfvrjsdirdwpkdrgdwgvggrmimvgmail`|mfdtgdkovrdrfqffotudombdkpfrdkirjt}pdfgnfdiogio`r`l``aaiqq``rqaigsrd`hwoshd`lfrrgnikmnonrnwbm`vu|idwu|f`muogpovk|hmhkjqqwlak|wwlithgbhvsdpnhobpwihnpcn|u|iototn|rdlkpwdanhion|hi`ffnpgaimra`w`cjd`quqsqu|rghmr|ij`brlqu|ik``noihrnvddtpwop}anoaokiiwbsth}thdwjdoktfkoowlp}`uuitkdtuguoiudvgjlijwupdiuowjrgsjwirhonbsmlndfvdp}mqh`hjwrjitvtjqdjcgi`}i`ad|ot`||fiwlvdl}amjidwpwhfw`tgjoqbrddwtijtaiqluumhajhhrssqgqttmmqr}rgpwdaawupikv}gjfbbgvgqgs|rbufdlthjtfqflirftmh}vrcrpa`pvabfoqvfr}kv`hqjrv|ipauasppfptpvfr}hopihu}padpcblamvudofsf}plaihpi|smsrdskkpds}ugmmlmajghkkcb`bogwm}hj}}uonrhg|dsrknwpgsvb`kw|bbjujls`gdth}blgagrgctbnglg`skbbhj}`apd}mrkp``rvogmjdrcu|ohqdc}sirskstadmrmcpir}dwl`tcbrbsmtlhmatcubbjddkffrivdqhinagpgwtwmmtp|ip|bavstiafhjiqbrlqdwak`dkvt}ahmg`sdw``i`udi`hfscguiklpdgingm`uvwgicgicwpdcqngscrgi}aoug`jovhkpsdkdccurbfctwwlvka|nii}iikowtccnoignwlr|dfpwkmu}ph}v`ddcnpdfpdn|mlnpwfwbfmufonaqmam}mbsubmimcnp`dmdwmbdmrm`w`apatdmurmsmqmrmmtflqgkoowdukdv}ohofctdofmomfbtdmq`amaonmi`mbq`ugv`qcvuoturovvqnfdkamctifmvd|tgp`dn`fsaphvdnknadlhtatnpbjmdkfvdintdkmdnuupcktagvqm|qlod`bc`gklcidf`adpkjq|bp`agpbuhpdl}pdnaougpppmdfkdfdfmaclmgmgofofmfigufjcuftfvfpnfogd}drsgcjk|bbgickigpkjg}kvjj}fjv}dkm`apf}ctpacvcpku}}gkvpfi}bck}la}i}r}j||}w}qsndjd`jmp|ppn||||dsmhrbvg|f|`anw|lrwa`ju|u|tr|vbhvrnqjttsiu`faqivmaivodwidwahnpvbdwo}cd|rccmflglgngmlmtdwtifurlroigqogarpoalftt`lpkr`m`lcuj}w`akdmurwlccoitumurtuwtaqsubqurvaiqaittwh}wtqpubk}ghkmvdnowmggqbhsdvljbau|wjwt`fbmkdgqaalbclokhmvrogdhiojoofiohlbrqubo}annuugpfodkq|iqplv`oiidwvdigagstmrlipuljdsgc}npnkl|kocogqcnjtqloanbiiomimqkuw`nvnkstfi`kllmclijtckipirdqaipaadkh}}wppdouhddhufoh`isghkp}k|}fup}kkrkhkg}|dagdfgdgfhiffrmahuhwow|kag|gvkhgskujknh`blqud||i|vjp}irlgrihnkbi}udusoupjtkprjqw}fj`kv}`wjfvv}hjb|}fcrhfvajjcokq}jq|c||j}qpd|ajpurtp|kugc|w`afi|pjsfkaj|fgcvsi}nmpkrbhkhrh}ukmgrktknhof`}ofmk}ifkhjwfjtjvfuhqpjtcrmhsgduidupnctrllqljnjtcgrf}l`clfrgjchnambsmlqvf|wpi}nvpwvfivfhon}tcmntkfrnrt`dwnqnnkoilfwolm`|im`jicgaw|qofdkq`abvcjtpinbrm`surmifupancvgsgqnvuqgpfpdd`njc|uckunacsppglbucnggsugjugtugcumnbqflmipturggf`simvfciwdtjtlugtfuovt`shnbpjwcdkwjtqapqhvwgtddlrf}fblbovp}ugirofboiprdgnataqvjpdugwugqovsg}wqwt||pulmhrhrmugiauiotvuglfrugvddnrmqhlmakp}nqcpagovjuususwcwntuuako|aimk}jwvntipgssmbbpvqnvotqdktgivlccdsrdkkjtvvwwl`fdpjhnobptdcvdmfotv``jngapdni|ocwfdwuimhkdusrpdqvnpairdwnfgpwuko}ndipgcpokpdvpfgcvdgswidkphtwo}mrpt|luvclqclpg}|rsfblw`aft`soiuodscorf`biofwbhovdsvdwsppngjs}isgvuukafwdnhnj}qftak}ovpssq``r|`fvgctfcntmdowjiqaih`}iftabmtjlbapiakvu|pawaqfar`adkm`uvvucoqagcuvij`mipnftf}dbsfjof|v}cg|r}oit|lhbcnbsrvwfi`}}ombckdsvbnpbpl|gqbmrp}wrmbrdhdkrpdgw}ruphwppo|vrb|bagbjsojt|daaqtiqbjcobp`jwpjhowhgtmrphchofakafb}bmpn`|vfjijnjhkcgqkko}q|}schc|l}dr|kjjjgjjmtds}|pjudkcugoj`pniocaoumuroiaopo`mibqcgvjlig`dnppfdawtdccpikkhpumopupwg`bwlhp|}p|fokol}tvn|mnbnrhnpfrp}qcdns|cdkokuigmcicbqigktwcvugffnugqcprtmtacbqph}okgvwccnruict}ikkocrwcrm``okn|}|pqmatpdws|inucb}rmgdhga`aj||drgtvssvmogvqkjwodrmugqca``|apglqobqpqrmhmgff}}|mnfn`wgosofjmb``h|shr}ckvcsddf`bh|bfldmn|fr|cas|lbb|rbrb|qag|savjujut|w|q`lgasrkmhnulsibmmqtofiqooofifoqguov`lwa}ibrfvthlub`ng}}g}cdkfgjtgbjnraqurcwcjkfwb|wta|ltfddkmgwahwlvbikdcai`ufvtgpjquakrpukpjhsidoolaqp}hwovv|dccdovw}wtlrrm`tjaittwa`dwwpdkwliqwnnisurqbshwtfntcmrw|fdkvsvowivwmbhp}|vdpfaipbcnfoipsaadbttsottffifiqimifg|fqgiwcgjbbmjo|olfqnjhtaaoj`rasdsfjrdfmqfhuhhugchthvh}muu`ua|ubuq|gawuoap|mauk|ig|juqtdur`vurlbtpqjot`tdhghml`|d`}`kvcp``cumpauotclftlgmb}gm|aimfwvatvh|jkqmdqwqg``|k|lbqnhrwotlmqnu}nuwfqqddwwtvq}wr|pnlqlspvowpsnvdfvfdw||vcjnquivf`glohjnn||vpubv}vvfdnnc|viowkhkoqvktnsp}d`}jifl|iigqiqfimlnanhpn}v|dqonrqhgqqjutlh|s}}qa|jqrhq|tapplwwwvkdniakpnrv}jqoopbptpbuqivhrup|kbviacaqqdsfsksqrag|gojnofljhrhshdmrnaf|nrpjuuj||obmcj}vnwnlo|}br}d}frfhhpius}cffvg|laju}pfmuw|m|srsorrkqpnhdamphhmamucwgqqskdh}pqwwoqdndvdsaihaqm|gtot`|lmolhbndwoqhwjjtqiqtmqgibakdrmhkp}`applchdrsdfsk`radjkosbiomtjupfujghi`hrurdi|j}jpbjr}ldchurcutmn`ks`ifqlqjjs`wuffdmvordul|`r`arrmrohrirp`w|rrtqrvrtvar}`nt}r}`pk}`s}dmc}gcdwakcotvmct`f}`fibrbpb|nrdnquvlhjn`qpmrtsdit|p|rdktporkwp`}gdwh`isvkkph}hflsngowmtnhoontioupwq`snpalrnnlmfdirjlg`ptgmivpdvvrpthssspwr`guro}f``|rlu`nrriuvj}mu}bnpfuw|bbqangbtnrm|ffpuurffadtoww`gsfbcu``maifidcflkkbafwwp|piirnjnpmavaaogbq`}otfuugphaubptkdrfh}itigk}jh}wdwltwjotpwotrdwpdwjgffggu`f`hgn`j`kgt}sqsk}a`fqsr|}h}hkonmonqwmkicfkksnjtr`armvrdgmdhrfuaarvkpp|gugw`dc|fbu}v||wndr}rp}atghhgbk`lkg}hgkskmll}vg|fdpvkijtfjsdsrhcuapiagarqwjcjdgm`mnadwfskfsuhaguplfuult}iml`ivddumqkfmgklmhwtqf}dwsd}}uu`lqhnfonfbvgibhpwc}jwubbonpmipwfsfbvln|uglqnqjapptorfd`mucufpbhfoh`ov}npaodlgk`|}pbnorotjsdhs`svgpbinwjnnlhijh`in|ifwpjlfgaiikngliin`i`miipcdvjkgssdvfdtqawrhpthko``umgntai`odkouaorvbhuphkcofhafja``vnaia`|ibioovihiju}cirt`acrrc}nhragi}vbmdibgfcbaawbc`bmwfbnbhf|ont}aufvbjhjffchtthobcbsmbpgh|}}jflm}wkoliow}rbbufkjtup|vmgamhafafa}rmouaaadnr}mvnmpaojfqslmwlmjlo`ojjksb}lcfplmjttll}lounqp|tgqtstmsk``loftoohwiajmgomfwbwgfpwacdwoco|`poqwttup}`ovhgihqwttmmonkdwminbv|ipw`dmkp}nsupwvipvb}gmiodjowvkvhiamgnswbdribhgvb}vlmvngpsdjdoidnioqgowiqobbnttrn}n`nhrdanpgd}nvngvkvdfqowwnnivrlonvptvk}fhoskaitkki|mhw`|}lin`nogra}`sdkwjp}kbmp|uojbcjlmjpmtjdjhifjkrdwnwctp|tlkrmtcpiooctjcqjgk|jajcci}tbmhjgjpsbdijuip`ajpv|rcfmrr}pgq`fbvtsrbdpcsr|bubrbb|jck|rpisqvd}rpmapk|jljplr|j}dwduogldudamstffsmswmmrn`trsvsasow|lngr|ssa}kbnmrnng|nhqkslhidknljtaobjhsmknuvgigilkgcpccnculm}r}j}jd`kgsmgqcqrhsjf}rorcdpwqpqackonalpgs}|shschtgnbsjrsfcss`ajgt`hrhkkccjb}|pjcag|cdwgog}ioobtaiii`dfkmhw`jinrd}duwvftonnloccudiwdijpvdihchlosdjiikdodihst|qioprkkcdcitcifjvf|lsrrcrjd|}rfc}rcjmbusbrsrcqdrarunsgrqrrrsgrdgcil}apl|}|srp}khwbfh}mbv|a}mpm|mm}jroofai`clbnjb}laqrckkot|kwwsstkpnacpsfp}nrt`du}grkswsssdbrduncdcdrtsuntupjvcwnacdkkfh|um|f|vij|p|fkscacauqgv`awbhj}dwpck`mvnkvvbcam`madivlurapivtaiwtdrafrrmcbcclhujj|oncnol}mjhgodsjacmavf|sqd}lhokbllal|vpfddwsljgjabagdsijbfgsrtffialqifpodvubmopucjlmwvtvbtfcpjccgnfbvfmuimugvmhcvdowrlhlsbqthotaalra}rtvfspgfldasmgijnuwiisqgcolotgvos`|wjtotugulmgawpmo`pfvvwsvmodfov|obsjfi`qkfkasidgirh`hprcu}a|qjcp||j`mkrm}vowsqs}bubnpqlf}b}r}s`rw}klrr|p|por`|vgmrsjvru}c}f`ppnpofw}qf}}|nftds|us`rnibljwls}pul}icicrduimrouqstu}k`hcpgwjucm`t|ubhfodtn}hlacp}uocpdwccjfvfnfinffnuf`nngkkdwqfosblwfklpttlthiggagwtadjuqirhfv``amwafvnoivwnmlbjtbp}mhhmqbwwimocr`acp}cpf}cgpnjovlbakkwtun|idpsthgkkrmj}t}crnimw`bfuuqm|lbmqftd`jik}d`dd}hr|osmtnmnok|`ikainnvrssqpq}ckviosjhkmdthchl|qjicmkbk`jjgiobvjmrk`v|dgssqq`uc`srrwd}jdgqjttoslof`fdwtwpgqjftl`wkkcspa}}biaiplpin`gardwghfkmv`pjgouho|u`ml`at|guqmgi|`hvlopmg}jphfroidjtggrggoblc|}lk|vkf}bfaavkqavvis`dubudid`cwcqljhq}nhoqqvdntvglakphbkjiihougoft`f|stwlimafhuhlcruoiuh|t`bj`}huljh`gc`tf}igohmqwfnbqawijfdt|dcmt}tdluwvt|wuu|ptgkdbbkfbcsiknkvkjgwslmfkvkpp|qgmfkj|cddwnugtjbkhtwjrk}qfpwvnwcujrjgjgs`touaigwajubciquc`dkthith`nd}w|ugkfgfll|bdmltdovooqgkptposmjbpahurv|oj}s}hth`qiqnwpntnm}m`udmiqpff|bqwjluqlwmnriiquuvbju`s|uhu|uonmdns|cfqmqmu}dunqdfkbnluttniho|itmccvhipprfta|cmqafqftk`ga|ouomic|m|hv|cj|gqhfhgocgg`v``tuogacuwklksriqqkntvcunvuwlrbhdw`bhdhfm|malrurfiwt|v|rjhmhkiarhrjh`vr}rprriprrajbvns}ijscvvsmfagcaa|ccagqmouqfoob`ib`kolbtrnbui`jurqf|u`vcollln|ip|gsblho|unqpqvbga||asiuq}qrdqd}bvps`}}swc}w`gtrfccf}cprcurmbr}cq}}flbwl}bc}}lj}||nlomkursdgmdwwrqw|pjukiforlcapw}pbijlujihiqfpdkvdaigkfaujbfs||tur`bfakj|iwd`agti`lfmhkgsgjf`n}aljkllkahrtqcs|vacw|p}mo}nr`ajobktso`|umrurjmr`wrtrp|g`hbnpckoi|jrik}fapapoaihgrifogf}`|jr}shmkj}lsiq}a`gkrlkkb}qkk}}sgh}updvknrg|n|}tifrqmwvtlbk}pulknrs}}jtcdormhkoftcav|rcrj|tskrh`ishfm`|urpsdcscopd}tsufapt}qipvpq}tvu|bqdmamv|ptoagdhqak|hdkgpbinapupskti}tjdl}pfdk|gqibwiihis}ht`bvffpgcgaflwdkuk|vbiqaohwiqooiwddurwbvqjc`fqktvponlqpfq}qdwwiiiaprm`p}o|cfubvabtluijvrljawcvrt}dda|hsf|aovfvhs`i|`hkh}quiwldvdwgai}kdwdsdnd}dkghtmldjtpijgaigiaiggddsv}bccmk`hffaisudphcdl`gq}gqqdcvrf`oqsdfbfnjdqhtpll`oltci}cnfvff}|gbaggaakrvifgmadilrwkracaumalg}tqloivdfmufqfragf|iafsfpllaana`adhaaai`ah`aogai`ulf}gaklquaq``qjovdqmavvnptlhkbmtklporrkhrsppfrairbpsvrpr}`rg|nb}j|rm|uissfvipabdkavqfutbaubfgpmcd`mqqagt`vm`b|dddw|chainus}`kgpun`gwpdi|vgbjwtgiqcvapdwuguglplddhvjpkhctqattub`hab}rdbl|}sjg|rgj|}lvkkqihbtck|}msc|pwcpucrmocrcnmdwwgbjmkjogkvuw|oobpaiohubojujolgphg}ku}jtgvfl|tklrh|rbrtakfglbopogfloso|hi`oso}dinpwjlmb`pt}h`kijacdaiddwvndwilg`ggifaiifiiclr}t`iomdft`ikbqvgvgn|nlccgr|vt|hsi`cmjsjomwrmglldvtdpodrubd|gtflmgibrfviplspnkfaamhk|cqoa`blki`jpbblpbu}bnq}ccu}msgsloolhafkcdrbnl|}juiguplwuwlj|kkca|wgdgnghr}pa|kbdabfgqlmjln}}dwnddtfdfmwlmqrai|ljtbblufuopp|k`ipw|wgl|sh}hbukhafdpq|}}iadwaqoslqobnncotudwviulmn|ku`vfuvbrdw`vrt}tmmcm|wn|gkisfkmwqmrmfil`fmcmjojts|mhcuqmshjhnldmcrfogrwmhkgovuqklmpccmjmh`bmga`acvmana}korlaaulqmabpr|dcnmwqanr|sgbvv}|}bnnqqmammcilor|soatj`}wmb|uqucmmiintjlpprrhjkqvpqjwvlp|vhrskknmpidibbsssgwjtdwigbduuudlb`ssbbkbl`vf}ai|kcgwhmhhb`goqacgkv|g`rwthhhingd|lmmbqi`os`|lm}ca|moousq`kfmw`pqmmukwtkwjotijofhdiwul`aqqprhonbcjwk}js`agtasrccrc|}h}ct`drmsigddkljdumghocahi|whfuu`luwowuqwpdu}lg|u|qlhdb}uc}bgovoorcnkrth}spl}}n|krtpwosvkq}iwrj}btncormrogsofpjctarwcdpnaphcap`pkofrhofblofgs`srlskwjgptdwhgbbug`rbmaoccnf}vhsatktgvrhgftagsrkcripmvctqbkpianicktulthv}bhpcutqq|}a}fshrcrsss}}`fcrhulg}p`pip`chgicpktrirwmq`nuvt}autpon|twsihnwimwpthb`}b`vdnrrvbsqtvhuolgarrt|ccfhjcwftqjugggblukfa`lshn}nhrvbl}gn|akou|brw}cw}nbgsjhd}dwrj`l|lwgsin|qguanccvhqtrakvmtwqotbownflqiwcajcrrfq}}shfjtpfgjlacsowdimoisollsrukdsgd|k}r|wppudgkum}wdvlbpijlvung|jlm|smbrt|dvvficfdggu`f`fgdh}odnpngp`wfpkgbcbquqvrd`hdmdclvatcrbdpwgq|lmp|figfwdahsfdgobvrimplndwwbvktqwiitkhaugjl`fwnfa|`|fjtpkhnoctt|mddolsngcbhh}itamwfgaiwnijloigqdv}f`ovt|tft|fpngrd|ijfirhoh|fcdwfdwmkmkp}vno|nngbdfc|ndrvoggnlgovl|mastrakhrnf|n}|n|qaolrsdvdo|dagm}hi`|mpnfja}atqujgfko|dc`t}hm|`fuqqgva}ph`kv|hkvio|djamhad`d`o}sbijd`dka`fhosl`lkckwmfcw``ghcwwjimldugswcmod`uomuiflmhvulugfi`u}bbtiw}gobwc``mtswb`tisdgftfwbudbishbmfmhmqdd}bsnfwbns|imc`wmljcmnmgdoqqmwbtihbpwbamkmfhlmmijm}lpjtlaoqafrmvlwsm`nglkvwrdsduvvmpdpgtowlcful|fua|lkbdfsmdvmnfqvhotvpifpcaaov`ij|roscpdtflagbhbh`ag}frnadknngukldnm`uaonhjpbwinnqtpn`fqcivilovfotoso}akt`gnwuaosdcotaoaouuoc|rilwutirnfkrklrljsif|wuchotccijijk`clawulhnmghthfoob|sglfnnflavnvolko|mi|rdp`osdi|fpmhbhdimqwlagd}klkfwk`vkbpknckgokkvwksgnijgonnflkk|opbu}nuqahpmoshkih|otobrijdb}hhimlknufrjkkgus|ojrdujootuvkn|ugitucvrndkniwpmohhu}ibfpunvlkrtnutppdrhisuu|rdtlpticvc|ud}gdmqhujlpfpdmkotppfuupwbrhvptigswonnfwkwurotbiobwslvikakotk`t}ardp|sosrduoccjuofujla|omibhrdimjwp|frpaouotwdwsovhlfvvtjfcck|ktv}qtv}f`untq`otrwdkqlqkpjqo|quscc|qqqcqmwpotajqmukv}prpuqt`apbqstuq}npcpnptbqndpspfapsunqdunspkmpfrpmmsa|vvjqfud`n|pmqpsnwcitotpsh|rdlhv}kotuvdtinp|iwhwhjotqifvgppnvonvisvwp}papuqhrhpq`rd|`dwjqccpccprshnbraccimkjh|ujdtvot}ccch|dkig}iwtp|vh}vqhnuqhimgobottmotodgsototoarrdmutntqqmg|lrccamigcl|`r|l|oshprkkg|nbpboo`fnik|kqh|wluot|}hakccjfgotccrdbogccotdo`fuqmdbhptoshi`rhpddvcds}rl`utqqhimqffrdkul`fbjtd|adrmduqdawvmdswb}hdoddccdk}hoqmgdjh`gljtcc`ffhccq`hojtqf|al`pnrl`|oinbhl`imhjkfrhrtsnho}iijthhf`fhq`l`hspwipdhosi|ofddwmimqmqhflfr`fsdqdfqhdoddmr`flqfrh`fq`ikjtqm|afpjrf|o``qfqqfimahidjqhdwudppwd}tds```mrn|dfodpndutjutd|wkfqmn|iudhdgdn`fimrdsvvddv||dhnodmndrd`nvdqdoaaqdllddlfw|iothhhjiiwifdl`ptqistqfdmt|ddbrkotghh`pturaurjtmaotdcmbulpnutstprkulufobghmovddndwdcl`sdhotl`l`hakfhtddfr|il`}|}fop}kdnibh``u`girfrisdakdjwmdl``|dr``fdhq`ghjtu|awjprwj|ouldun|wjimd}llkfrdhiaatghpkwjavn|ghuullffdqwmddkdqpsvddq`uddrnoddfdgllidgiqvddtdgbgddd}dfudgbfdtndhdgdbghf``fq`wjddwd}|adrul|odc`qulimdlfomgs``dg}ot````ddfr``wjghgmddbvulauwdcdcwffidjtdcdcndacgpddaufnfdauahddkuud}mqmumogfgf`wgougswtjcvgfmuwruld`tiqbd`t}ul`pululbwdcddlkulak``mlrmldkij`uvrrdfiodfqfiicrafinjosfipih|tj`cud|ffiimbgakafrul``iavtmphh|fipgdckmuquobulfmulkuakdcd`}juuld`tidm}cd`qdbw`a}dcqmgdauadgdudko|dahdkqd}dmaminulonfdb|hjmttqfiwruldakotdb}dtofivdcf`qbuvgnqpdd`dptjigfostjpsh|gfans|h}qqtjim|dcfrdlq`fidadlc}csvrdluogfu|dlqdodlmdoldldcdlg}dl`bgmijgfgrakgo|tqw`gajd`ihrdtjdcldlwadoldck`qpdlrodokldousdowobdoqudoslrfidnqcdnnogodntqdtqctqtqmgtqqdkdnfndncdnmrdoldibdlvsvdnurgn}di}dovdn|dasakdidrdmkr|daugdhmfdivmdnopgadh`dhpcdhf`qinsmdavaudhtvsbaudlnplwfimmdn}dmldnowdkmndkovidmkdkkgo|`uq|augndkmtjdhtdwfilhdkidbdmcnpidhmhdkvdkhdh`gdjbdo}kdjodjadjjdhmudjtdopowtpdfidmrdovdjndkcpwwduoqlsdjfdj|pwvdhmqdj}dkpjdkc"_1l_(___(__))function _1l_l(l_,_1l,l11)local _l=l_[1];local _1=l_[2];local _=l_[3];return function(...)local ll=1;local __=-1;local _1l11={...};local _1_=_1_('#',...)-1;local function _11l1()local _l=_l;local l__1=_1;local l=_;local _1l_1=ll_ local l_={};local _1_l={};local _1={};for _=0,_1_ do if(_>=l)then l_[_-l]=_1l11[_+1];else _1[_]=_1l11[_+1];end;end;local _=_1_-l+1 local _;local l;while true do _=_l[ll];l=_[1];local l_,l_,l_=_[1],_[2],_[3]if(l<=54)then if(l<=26)then if(l<=12)then if(l<=5)then if(l<=2)then if(l<=0)then if(_[2]<=_1[_[4]])then ll=ll+1;else ll=_[3];end;elseif(l==1)then local _=_1;do return end;else local __=_1;local _1l_1=l__1[_[3]];local _11;local _1={};_11=l1_({},{__index=function(ll,_)local _=_1[_];return _[1][_[2]];end,__newindex=function(_l,_,ll)local _=_1[_]_[1][_[2]]=ll;end;});for l=1,_[4]do ll=ll+1;local _=_l[ll];if _[1]==45 then _1[l-1]={__,_[3]};else _1[l-1]={_1l,_[3]};end;_1_l[#_1_l+1]=_1;end;__[_[2]]=_1l_l(_1l_1,_11,l11);end;elseif(l<=3)then local l;_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_1[_[4]];elseif(l>4)then local ll=_1;ll[_[2]]=(not ll[_[3]]);else local _11=_[2];local _l={};for _=1,#_1_l do local _=_1_l[_];for ll=0,#_ do local ll=_[ll];local l=ll[1];local _=ll[2];if l==_1 and _>=_11 then _l[_]=l[_];ll[1]=_l;end;end;end;end;elseif(l<=8)then if(l<=6)then local l11;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];if not _1[_[2]]then ll=ll+1;else ll=_[3];end;elseif(l==7)then local ll=_1;ll[_[2]]=ll[_[3]]+ll[_[4]];else local ll=_1;local _l=_[3];local _1=ll[_l]for _=_l+1,_[4]do _1=_1..ll[_];end;ll[_[2]]=_1;end;elseif(l<=10)then if(l==9)then local _1=_1;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_1[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l](_1[l+1])else local ll=_1;local _=_[2];do return _11(ll,_,__)end;end;elseif(l>11)then local _1=_1;local l11;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];if _1[_[2]]then ll=ll+1;else ll=_[3];end;else local _11;local l;_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];_11=_1[_[3]];_1[l+1]=_11;_1[l]=_11[_[4]];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_1[l+1])ll=ll+1;_=_l[ll];if(_[2]<=_1[_[4]])then ll=_[3];else ll=ll+1;end;end;elseif(l<=19)then if(l<=15)then if(l<=13)then local __;local l;_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];l=_[2];__=_1[_[3]];_1[l+1]=__;_1[l]=__[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];elseif(l>14)then local _1=_1;local l11;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];if(_1[_[2]]==_[4])then ll=ll+1;else ll=_[3];end;else if(_[2]<_1[_[4]])then ll=_[3];else ll=ll+1;end;end;elseif(l<=17)then if(l>16)then local _1=_1;local l;local _1_l;local _1l,l_;local _l1;local l;_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];_l1=_1[_[3]];_1[l+1]=_l1;_1[l]=_l1[_[4]];ll=ll+1;_=_l[ll];l=_[2]_1l,l_=_1l_1(_1[l](_1[l+1]))__=l_+l-1 _1_l=0;for _=l,__ do _1_l=_1_l+1;_1[_]=_1l[_1_l];end;ll=ll+1;_=_l[ll];l=_[2]_1l={_1[l](_11(_1,l+1,__))};_1_l=0;for _=l,_[4]do _1_l=_1_l+1;_1[_]=_1l[_1_l];end ll=ll+1;_=_l[ll];ll=_[3];else local _=_[2]_1[_]=_1[_]()end;elseif(l==18)then local _1=_1;local __;local l;_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];__=_1[_[3]];_1[l+1]=__;_1[l]=__[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2]_1[l](_11(_1,l+1,_[3]))else local _1=_1;local _11;local l;l=_[2];_11=_1[_[3]];_1[l+1]=_11;_1[l]=_11[_[4]];ll=ll+1;_=_l[ll];l=_[2]_1[l](_1[l+1])ll=ll+1;_=_l[ll];_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l](_1[l+1])ll=ll+1;_=_l[ll];ll=_[3];end;elseif(l<=22)then if(l<=20)then local ll=_[2]_1[ll](_11(_1,ll+1,_[3]))elseif(l>21)then local _1=_1;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_1[_[4]];ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];ll=ll+1;_=_l[ll];_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_1[_[4]];else local _=_[2]_1[_](_1[_+1])end;elseif(l<=24)then if(l>23)then local _1=_1;local l11;local l;_1[_[2]][_[3]]=_1[_[4]];ll=ll+1;_=_l[ll];l=_[2]_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]={};ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];else if(_1[_[2]]==_[4])then ll=ll+1;else ll=_[3];end;end;elseif(l>25)then local ll=_1;ll[_[2]][_[3]]=ll[_[4]];else _1[_[2]]=_1[_[3]]*_1[_[4]];end;elseif(l<=40)then if(l<=33)then if(l<=29)then if(l<=27)then _1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]]-_1[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];if(_1[_[2]]<=_[4])then ll=_[3];else ll=ll+1;end;elseif(l>28)then local _1=_1;_1[_[2]]=(_[3]~=0);ll=ll+1;else local l11;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_1[l+1])ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1l[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))end;elseif(l<=31)then if(l>30)then local _1=_1;local l;local _1_l;local _1l,l_;local _l1;local l;_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];_l1=_1[_[3]];_1[l+1]=_l1;_1[l]=_l1[_[4]];ll=ll+1;_=_l[ll];l=_[2]_1l,l_=_1l_1(_1[l](_1[l+1]))__=l_+l-1 _1_l=0;for _=l,__ do _1_l=_1_l+1;_1[_]=_1l[_1_l];end;ll=ll+1;_=_l[ll];l=_[2]_1l={_1[l](_11(_1,l+1,__))};_1_l=0;for _=l,_[4]do _1_l=_1_l+1;_1[_]=_1l[_1_l];end ll=ll+1;_=_l[ll];ll=_[3];else local l11;local l;_1[_[2]][_[3]]=_1[_[4]];ll=ll+1;_=_l[ll];l=_[2]_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]={};ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];end;elseif(l>32)then local _1=_1;local l11;local l;_1[_[2]][_[3]]=_1[_[4]];ll=ll+1;_=_l[ll];l=_[2]_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]={};ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];else _1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]]-_1[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];if(_1[_[2]]<=_[4])then ll=_[3];else ll=ll+1;end;end;elseif(l<=36)then if(l<=34)then local l11;local l;_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_1[_[4]];ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_1[_[4]];ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];elseif(l>35)then local _1=_1;local l11;local l;l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];ll=_[3];else do return _1[_[2]]end end;elseif(l<=38)then if(l>37)then local ll=_1;ll[_[2]]=ll[_[3]][_[4]];else local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=#_1[_[3]];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_1[_[4]]];end;elseif(l==39)then local _1=_1;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]]+_1[_[4]];ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_1[_[4]];else local _1=_1;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l]()ll=ll+1;_=_l[ll];_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l]()end;elseif(l<=47)then if(l<=43)then if(l<=41)then local l;local _1_l;local _1l,l_;local _l1;local l;_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];_l1=_1[_[3]];_1[l+1]=_l1;_1[l]=_l1[_[4]];ll=ll+1;_=_l[ll];l=_[2]_1l,l_=_1l_1(_1[l](_1[l+1]))__=l_+l-1 _1_l=0;for _=l,__ do _1_l=_1_l+1;_1[_]=_1l[_1_l];end;ll=ll+1;_=_l[ll];l=_[2]_1l={_1[l](_11(_1,l+1,__))};_1_l=0;for _=l,_[4]do _1_l=_1_l+1;_1[_]=_1l[_1_l];end ll=ll+1;_=_l[ll];ll=_[3];elseif(l>42)then local ll=_1;ll[_[2]]=(_[3]~=0);else if _1[_[2]]then ll=ll+1;else ll=_[3];end;end;elseif(l<=45)then if(l==44)then local ll=_1;local _1=_[2]local l={ll[_1](ll[_1+1])};local _l=0;for _=_1,_[4]do _l=_l+1;ll[_]=l[_l];end else local ll=_1;ll[_[2]]=ll[_[3]];end;elseif(l>46)then local _1=_1;local l11;local l;_1[_[2]][_[3]]=_1[_[4]];ll=ll+1;_=_l[ll];l=_[2]_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]={};ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];else local l11;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];if not _1[_[2]]then ll=ll+1;else ll=_[3];end;end;elseif(l<=50)then if(l<=48)then local _l=_[2];local ll=_1[_[3]];_1[_l+1]=ll;_1[_l]=ll[_[4]];elseif(l==49)then local ll=_1;local _=_[2]ll[_]=ll[_](_11(ll,_+1,__))else local _1=_1;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];if(_1[_[2]]~=_1[_[4]])then ll=ll+1;else ll=_[3];end;end;elseif(l<=52)then if(l==51)then local _1=_1;if not _1[_[2]]then ll=ll+1;else ll=_[3];end;else local ll=_1;local _=_[2]local _l,_1=_1l_1(ll[_](ll[_+1]))__=_1+_-1 local _1=0;for _=_,__ do _1=_1+1;ll[_]=_l[_1];end;end;elseif(l==53)then local ll=_1;ll[_[2]][_[3]]=_[4];else local ll=_1;ll[_[2]]=_[3];end;elseif(l<=81)then if(l<=67)then if(l<=60)then if(l<=57)then if(l<=55)then local l;local _1_l;local _1l,l_;local _l1;local l;_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];_l1=_1[_[3]];_1[l+1]=_l1;_1[l]=_l1[_[4]];ll=ll+1;_=_l[ll];l=_[2]_1l,l_=_1l_1(_1[l](_1[l+1]))__=l_+l-1 _1_l=0;for _=l,__ do _1_l=_1_l+1;_1[_]=_1l[_1_l];end;ll=ll+1;_=_l[ll];l=_[2]_1l={_1[l](_11(_1,l+1,__))};_1_l=0;for _=l,_[4]do _1_l=_1_l+1;_1[_]=_1l[_1_l];end ll=ll+1;_=_l[ll];ll=_[3];elseif(l==56)then local ll=_1;ll[_[2]][ll[_[3]]]=ll[_[4]];else local ll=_1;ll[_[2]]=ll[_[3]][ll[_[4]]];end;elseif(l<=58)then local l11;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]={};ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];ll=ll+1;_=_l[ll];l=_[2]_1[l](_11(_1,l+1,_[3]))elseif(l==59)then local _1=_1;if(_1[_[2]]<_1[_[4]])then ll=_[3];else ll=ll+1;end;else local _1=_1;local l;local __;local _1_l;_1_l=_[3];__=_1[_1_l]for _=_1_l+1,_[4]do __=__.._1[_];end;_1[_[2]]=__;ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_1[_[4]];ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];ll=ll+1;_=_l[ll];_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_1[_[4]];ll=ll+1;_=_l[ll];ll=_[3];end;elseif(l<=63)then if(l<=61)then local l11;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l](_1[l+1])ll=ll+1;_=_l[ll];_1[_[2]]=_1l[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]]=_[3];elseif(l==62)then local ll=_1;ll[_[2]]=#ll[_[3]];else local ll=_1;local _=_[2];local _1=ll[_];for _=_+1,__ do _l1(_1,ll[_])end;end;elseif(l<=65)then if(l>64)then local ll=_1;for _=_[2],_[3]do ll[_]=nil;end;else local __;local l;_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];l=_[2];__=_1[_[3]];_1[l+1]=__;_1[l]=__[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];if not _1[_[2]]then ll=ll+1;else ll=_[3];end;end;elseif(l==66)then local ll=_1;ll[_[2]]=_1l_l(l__1[_[3]],nil,l11);else local _1=_1;local l11;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];if not _1[_[2]]then ll=ll+1;else ll=_[3];end;end;elseif(l<=74)then if(l<=70)then if(l<=68)then local __;local l;l=_[2];__=_1[_[3]];_1[l+1]=__;_1[l]=__[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_1[l+1])ll=ll+1;_=_l[ll];_1[_[2]]=_1l[_[3]];ll=ll+1;_=_l[ll];l=_[2];__=_1[_[3]];_1[l+1]=__;_1[l]=__[_[4]];elseif(l==69)then local _1=_1;local _l=_[2]local l={_1[_l](_11(_1,_l+1,__))};local ll=0;for _=_l,_[4]do ll=ll+1;_1[_]=l[ll];end else local _1=_1;local l11;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];if not _1[_[2]]then ll=ll+1;else ll=_[3];end;end;elseif(l<=72)then if(l==71)then local _1=_1;if(_1[_[2]]~=_1[_[4]])then ll=ll+1;else ll=_[3];end;else local _1=_1;ll=_[3];end;elseif(l==73)then local _1=_1;local l11;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=(_[3]~=0);ll=ll+1;_=_l[ll];l=_[2]_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];ll=_[3];else local _1=_1;local l;_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_1[_[4]];ll=ll+1;_=_l[ll];ll=_[3];end;elseif(l<=77)then if(l<=75)then local ll=_[2]local _l,_=_1l_1(_1[ll](_11(_1,ll+1,_[3])))__=_+ll-1 local _=0;for ll=ll,__ do _=_+1;_1[ll]=_l[_];end;elseif(l>76)then local ll=_1;_1l[_[3]]=ll[_[2]];else local ll=_[2]_1[ll]=_1[ll](_11(_1,ll+1,_[3]))end;elseif(l<=79)then if(l>78)then local _l=_1;local _1=_[2];local _11=_l[_1+2];local l=_l[_1]+_11;_l[_1]=l;if(_11>0)then if(l<=_l[_1+1])then ll=_[3];_l[_1+3]=l;end elseif(l>=_l[_1+1])then ll=_[3];_l[_1+3]=l;end else local _11;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];_11=_1[_[3]];_1[l+1]=_11;_1[l]=_11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]={};ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];ll=ll+1;_=_l[ll];_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_1[l+1])ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_1[_[4]];ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];end;elseif(l>80)then local _l=_1;local ll=_[2]local l={_l[ll](_11(_l,ll+1,_[3]))};local _1=0;for _=ll,_[4]do _1=_1+1;_l[_]=l[_1];end else _1[_[2]]=_1l[_[3]];end;elseif(l<=95)then if(l<=88)then if(l<=84)then if(l<=82)then local l=_[2];local _11=_[4];local _l=l+2 local l={_1[l](_1[l+1],_1[_l])};for _=1,_11 do _1[_l+_]=l[_];end;local l=l[1]if l then _1[_l]=l ll=_[3];else ll=ll+1;end;elseif(l>83)then local _1=_1;local _1l_l;local l11;local l_,l__1;local _1_l;local l;l=_[2];_1_l=_1[_[3]];_1[l+1]=_1_l;_1[l]=_1_l[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1l[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2]l_,l__1=_1l_1(_1[l](_11(_1,l+1,_[3])))__=l__1+l-1 l11=0;for _=l,__ do l11=l11+1;_1[_]=l_[l11];end;ll=ll+1;_=_l[ll];l=_[2];_1l_l=_1[l];for _=l+1,__ do _l1(_1l_l,_1[_])end;else local _11;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];_11=_1[_[3]];_1[l+1]=_11;_1[l]=_11[_[4]];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_1[l+1])ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];end;elseif(l<=86)then if(l>85)then local _1=_1;local _11;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_1[l+1])ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];ll=ll+1;_=_l[ll];_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];_11=_1[_[3]];_1[l+1]=_11;_1[l]=_11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];else _1[_[2]][_1[_[3]]]=_[4];end;elseif(l==87)then local _1=_1;if(_1[_[2]]<=_[4])then ll=ll+1;else ll=_[3];end;else local ll=_1;ll[_[2]]=l11[_[3]];end;elseif(l<=91)then if(l<=89)then local __;local l;_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];l=_[2];__=_1[_[3]];_1[l+1]=__;_1[l]=__[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];if _1[_[2]]then ll=ll+1;else ll=_[3];end;elseif(l==90)then local _1=_1;if(_1[_[2]]<=_[4])then ll=_[3];else ll=ll+1;end;else local _1=_1;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_1[l+1])ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];if(_1[_[2]]==_[4])then ll=ll+1;else ll=_[3];end;end;elseif(l<=93)then if(l==92)then local ll=_1;local _1=_[2]ll[_1]=ll[_1](_11(ll,_1+1,_[3]))else local _1=_1;local l;_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]]=l11[_[3]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];if(_1[_[2]]==_1[_[4]])then ll=ll+1;else ll=_[3];end;end;elseif(l==94)then local _1=_1;local _l=_[2];local l=_1[_l]local _11=_1[_l+2];if(_11>0)then if(l>_1[_l+1])then ll=_[3];else _1[_l+3]=l;end elseif(l<_1[_l+1])then ll=_[3];else _1[_l+3]=l;end else local ll=_1;ll[_[2]]={};end;elseif(l<=102)then if(l<=98)then if(l<=96)then local l;local _11;_1[_[2]]={};ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]];ll=ll+1;_=_l[ll];_11=_[3];l=_1[_11]for _=_11+1,_[4]do l=l.._1[_];end;_1[_[2]]=l;ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_1[_[4]];elseif(l>97)then local _1=_1;if(_[2]<=_1[_[4]])then ll=_[3];else ll=ll+1;end;else local ll=_[2];local _l=_1[ll];for _=ll+1,_[3]do _l1(_l,_1[_])end;end;elseif(l<=100)then if(l==99)then local ll=_1;local _=_[2]ll[_]=ll[_](ll[_+1])else local ll=_1;local _1=_[2];do return ll[_1](_11(ll,_1+1,_[3]))end;end;elseif(l==101)then local _1=_1;if(_1[_[2]]~=_[4])then ll=ll+1;else ll=_[3];end;else local ll=_1;ll[_[2]]=ll[_[3]]-ll[_[4]];end;elseif(l<=105)then if(l<=103)then local l11;local l;_1[_[2]][_[3]]=_1[_[4]];ll=ll+1;_=_l[ll];l=_[2]_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]={};ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];elseif(l==104)then local _1=_1;if(_1[_[2]]==_1[_[4]])then ll=ll+1;else ll=_[3];end;else local _1=_1;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_1[l+1])ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_[4];ll=ll+1;_=_l[ll];_1[_[2]]=l11[_[3]];end;elseif(l<=107)then if(l>106)then local _1=_1;local l11;local l;_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]][_[4]];ll=ll+1;_=_l[ll];l=_[2];l11=_1[_[3]];_1[l+1]=l11;_1[l]=l11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];if not _1[_[2]]then ll=ll+1;else ll=_[3];end;else local l11;local _11;local l;l=_[2]_1[l](_1[l+1])ll=ll+1;_=_l[ll];l=_[2];_11=_1[_[3]];_1[l+1]=_11;_1[l]=_11[_[4]];ll=ll+1;_=_l[ll];_1[_[2]]={};ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2];l11=_1[l];for _=l+1,_[3]do _l1(l11,_1[_])end;end;elseif(l>108)then local ll=_1;ll[_[2]]();else local l;_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];_1[_[2]]=_[3];ll=ll+1;_=_l[ll];l=_[2]_1[l]=_1[l](_11(_1,l+1,_[3]))ll=ll+1;_=_l[ll];_1[_[2]]=_1[_[3]]+_1[_[4]];ll=ll+1;_=_l[ll];_1[_[2]][_[3]]=_1[_[4]];end;ll=ll+1;end;end;local _,_1=ll_(pcall(_11l1))if not _[1]then local ll=l_[7][ll]or'?'error('NXP-Error :'..ll..':'.._[2])else return _11(_,2,_1)end;end;end;return l_1()end)}):__NXP(nil,nil,nil,nil,nil,nil,nil,nil,nil,string,math,table),nil;
