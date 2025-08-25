@@ -1,4 +1,4 @@
--- After the last retard skidded, I decided i HAD this script
+-- After the last retard skidded, I decided i HAD to obfuscate this script
 -- If you still request the source code you can dm on discord @neptunescripts and i will gladly give you it
 -- ^ or you can check commit and find previous version
 
