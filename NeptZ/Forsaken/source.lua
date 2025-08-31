@@ -1,6 +1,5 @@
 -- 🎉 Forsaken script is open source again. Also i added hitbox expander WHICH IS IN BETA!
 
-print"e"
 --[[
                             $$\                                                                 $$\            $$\               
                             $$ |                                                                \__|           $$ |              
@@ -585,7 +584,7 @@ AimbotGroup:AddToggle("Aimbot", {
                         local v = getClosestSurvivorToMouse(x, y)
                         if v then
                             local root = v.HumanoidRootPart
-                            cam.CFrame = CFrame.new(cam.CFrame.Position, root.Position + (Toggles.AimbotPrediction.Value and (v.HumanoidRootPart.Velocity * 2) or Vector3.one))
+                            cam.CFrame = CFrame.new(cam.CFrame.Position, root.Position + (Toggles.AimbotPrediction.Value and (v.HumanoidRootPart.Velocity * (10 / Options.PredictionLevel.Value)) or Vector3.one))
                         end
                     elseif isSurvivor then
                         if killerModel and ({cam:WorldToViewportPoint(killerModel.HumanoidRootPart.Position)})[2] then
