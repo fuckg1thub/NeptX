@@ -1,3 +1,4 @@
+-- ⚠️ READ ⚠️ Just because this script is open source does NOT give you the right to use any code inside this file. It doesnt matter if you "give credits" or anything. I do not give ANY permission to use any code from here!
 -- 🎉 Forsaken script is open source again. Also i added hitbox expander WHICH IS IN BETA!
 
 --[[
