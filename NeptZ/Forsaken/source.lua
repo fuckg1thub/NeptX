@@ -1,126 +1,9 @@
--- ⚠️ READ ⚠️ Just because this script is open source does NOT give you the right to use any code inside this file. It doesnt matter if you "give credits" or anything. I do not give ANY permission to use any code from here!
--- 🎉 Forsaken script is open source again. Also i added hitbox expander WHICH IS IN BETA!
+-- NXP Hub forsaken source code, do not copy any of the code in here please, its my work and you dont have permission to use it.
 
---[[
-                            $$\                                                                 $$\            $$\               
-                            $$ |                                                                \__|           $$ |              
-$$$$$$$\   $$$$$$\   $$$$$$\ $$$$$$\   $$\   $$\ $$$$$$$\   $$$$$$\   $$$$$$$\  $$$$$$$\  $$$$$$\  $$\  $$$$$$\ $$$$$$\    $$$$$$$\ 
-$$  __$$\ $$  __$$\ $$  __$$\\_$$  _|  $$ |  $$ |$$  __$$\ $$  __$$\ $$  _____|$$  _____|$$  __$$\ $$ |$$  __$$\\_$$  _|  $$  _____|
-$$ |  $$ |$$$$$$$$ |$$ /  $$ | $$ |    $$ |  $$ |$$ |  $$ |$$$$$$$$ |\$$$$$$\  $$ /      $$ |  \__|$$ |$$ /  $$ | $$ |    \$$$$$$\  
-$$ |  $$ |$$   ____|$$ |  $$ | $$ |$$\ $$ |  $$ |$$ |  $$ |$$   ____| \____$$\ $$ |      $$ |      $$ |$$ |  $$ | $$ |$$\  \____$$\ 
-$$ |  $$ |\$$$$$$$\ $$$$$$$  | \$$$$  |\$$$$$$  |$$ |  $$ |\$$$$$$$\ $$$$$$$  |\$$$$$$$\ $$ |      $$ |$$$$$$$  | \$$$$  |$$$$$$$  |
-\__|  \__| \_______|$$  ____/   \____/  \______/ \__|  \__| \_______|\_______/  \_______|\__|      \__|$$  ____/   \____/ \_______/ 
-                    $$ |                                                                               $$ |                         
-                    $$ |                                                                               $$ |                         
-                    \__|                                                                               \__|                             
-]]
+-- Added some extra features and fixed some bugs
+-- Updated version to V2.1 (are we making improvements chat)
 
-
-local Gui = Instance.new("ScreenGui")
-local Frame = Instance.new("Frame")
-local Title = Instance.new("TextLabel")
-local CheckHolder = Instance.new("Frame")
-local CheckBox = Instance.new("TextButton")
-local CheckMark = Instance.new("TextLabel")
-local CheckText = Instance.new("TextLabel")
-local LoadBtn = Instance.new("TextButton")
-Gui.Name = "ForsakenLoader"
-Gui.ResetOnSpawn = false
-Gui.Parent = game:GetService("CoreGui")
-
-
-Frame.Size = UDim2.new(0, 260, 0, 150)
-Frame.Position = UDim2.new(0.5, -130, 0.5, -75)
-Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-Frame.BorderSizePixel = 0
-Frame.Active = true
-Frame.Draggable = true
-Frame.Parent = Gui
-Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 10)
-
-Title.Size = UDim2.new(1, -20, 0, 40)
-Title.Position = UDim2.new(0, 10, 0, 5)
-Title.BackgroundTransparency = 1
-Title.Text = "Forsaken script by nxp hub"
-Title.TextColor3 = Color3.fromRGB(235, 235, 235)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 16
-Title.TextXAlignment = Enum.TextXAlignment.Center
-Title.Parent = Frame
-
-CheckHolder.Size = UDim2.new(0, 200, 0, 24)
-CheckHolder.Position = UDim2.new(0, 10, 1, -70)
-CheckHolder.BackgroundTransparency = 1
-CheckHolder.Parent = Frame
-
-CheckBox.Size = UDim2.new(0, 20, 0, 20)
-CheckBox.Position = UDim2.new(0, 0, 0.5, -10)
-CheckBox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-CheckBox.AutoButtonColor = false
-CheckBox.Text = ""
-CheckBox.Parent = CheckHolder
-Instance.new("UICorner", CheckBox).CornerRadius = UDim.new(0, 4)
-
-CheckMark.AnchorPoint = Vector2.new(0.5, 0.5)
-CheckMark.Position = UDim2.new(0.5, 0, 0.5, 0)
-CheckMark.Size = UDim2.new(0.7, 0, 0.7, 0)
-CheckMark.BackgroundTransparency = 1
-CheckMark.Text = ""
-CheckMark.TextScaled = true
-CheckMark.Font = Enum.Font.GothamBold
-CheckMark.Parent = CheckBox
-
-CheckText.Size = UDim2.new(0, 170, 1, 0)
-CheckText.Position = UDim2.new(0, 30, 0, 0)
-CheckText.BackgroundTransparency = 1
-CheckText.Text = "Use Linoria GUI (PC only)"
-CheckText.TextColor3 = Color3.fromRGB(235, 235, 235)
-CheckText.Font = Enum.Font.Gotham
-CheckText.TextSize = 14
-CheckText.TextXAlignment = Enum.TextXAlignment.Left
-CheckText.Parent = CheckHolder
-
-LoadBtn.Size = UDim2.new(1, -6, 0, 32)
-LoadBtn.Position = UDim2.new(0, 3, 1, -35)
-LoadBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-LoadBtn.Text = "Load Script"
-LoadBtn.TextColor3 = Color3.fromRGB(235, 235, 235)
-LoadBtn.Font = Enum.Font.GothamBold
-LoadBtn.TextSize = 15
-LoadBtn.AutoButtonColor = false
-LoadBtn.Parent = Frame
-Instance.new("UICorner", LoadBtn).CornerRadius = UDim.new(0, 6)
-
-_G.useLinoria = false
-local toggled = false
-local loaded = false
-
-local function rainbowColor(t)
-    return Color3.fromHSV(t % 1, 1, 1)
-end
-
-CheckBox.MouseButton1Click:Connect(function()
-    toggled = not toggled
-    _G.useLinoria = toggled
-    CheckMark.Text = toggled and utf8.char(10003) or ""
-end)
-
-LoadBtn.MouseButton1Click:Connect(function()
-    loaded = true
-    Gui:Destroy()
-end)
-
-task.spawn(function()
-    local t = 0
-    while task.wait() do
-        if toggled and CheckMark.Text ~= "" then
-            t = t + 0.001
-            CheckMark.TextColor3 = rainbowColor(t)
-        end
-    end
-end)
-
-repeat task.wait() until loaded
+local a=Instance.new("ScreenGui")local b=Instance.new("Frame")local c=Instance.new("TextLabel")local d=Instance.new("Frame")local e=Instance.new("TextButton")local f=Instance.new("TextLabel")local g=Instance.new("TextLabel")local h=Instance.new("TextButton")a.Name="ForsakenLoader"a.ResetOnSpawn=false;a.Parent=game:GetService("CoreGui")b.Size=UDim2.new(0,260,0,150)b.Position=UDim2.new(0.5,-130,0.5,-75)b.BackgroundColor3=Color3.fromRGB(20,20,20)b.BorderSizePixel=0;b.Active=true;b.Draggable=true;b.Parent=a;Instance.new("UICorner",b).CornerRadius=UDim.new(0,10)c.Size=UDim2.new(1,-20,0,40)c.Position=UDim2.new(0,10,0,5)c.BackgroundTransparency=1;c.Text="Forsaken script by nxp hub"c.TextColor3=Color3.fromRGB(235,235,235)c.Font=Enum.Font.GothamBold;c.TextSize=16;c.TextXAlignment=Enum.TextXAlignment.Center;c.Parent=b;d.Size=UDim2.new(0,200,0,24)d.Position=UDim2.new(0,10,1,-70)d.BackgroundTransparency=1;d.Parent=b;e.Size=UDim2.new(0,20,0,20)e.Position=UDim2.new(0,0,0.5,-10)e.BackgroundColor3=Color3.fromRGB(35,35,35)e.AutoButtonColor=false;e.Text=""e.Parent=d;Instance.new("UICorner",e).CornerRadius=UDim.new(0,4)f.AnchorPoint=Vector2.new(0.5,0.5)f.Position=UDim2.new(0.5,0,0.5,0)f.Size=UDim2.new(0.7,0,0.7,0)f.BackgroundTransparency=1;f.Text=""f.TextScaled=true;f.Font=Enum.Font.GothamBold;f.Parent=e;g.Size=UDim2.new(0,170,1,0)g.Position=UDim2.new(0,30,0,0)g.BackgroundTransparency=1;g.Text="Use Linoria GUI (PC only)"g.TextColor3=Color3.fromRGB(235,235,235)g.Font=Enum.Font.Gotham;g.TextSize=14;g.TextXAlignment=Enum.TextXAlignment.Left;g.Parent=d;h.Size=UDim2.new(1,-6,0,32)h.Position=UDim2.new(0,3,1,-35)h.BackgroundColor3=Color3.fromRGB(45,45,45)h.Text="Load Script"h.TextColor3=Color3.fromRGB(235,235,235)h.Font=Enum.Font.GothamBold;h.TextSize=15;h.AutoButtonColor=false;h.Parent=b;Instance.new("UICorner",h).CornerRadius=UDim.new(0,6)_G.useLinoria=false;local i=false;local j=false;local function k(l)return Color3.fromHSV(l%1,1,1)end;e.MouseButton1Click:Connect(function()i=not i;_G.useLinoria=i;f.Text=i and utf8.char(10003)or""end)h.MouseButton1Click:Connect(function()j=true;a:Destroy()end)task.spawn(function()local l=0;while task.wait()do if i and f.Text~=""then l=l+0.001;f.TextColor3=k(l)end end end)repeat task.wait()until j
 
 local PathfindingService = game:GetService("PathfindingService")
 local Players = game:GetService("Players")
@@ -147,8 +30,7 @@ local function pathfindTo(targetPos)
     if path.Status == Enum.PathStatus.Success then
         for _, waypoint in ipairs(path:GetWaypoints()) do
             if hNow ~= h then return end
-            hum:MoveTo(waypoint.Position)
-            repeat task.wait() until ((root.Position * Vector3.new(1, 0, 1)) - (waypoint.Position * Vector3.new(1, 0, 1))).magnitude <= 2 or not plr.Character.HumanoidRootPart or hNow ~= h
+            repeat hum:MoveTo(waypoint.Position) task.wait() until ((root.Position * Vector3.new(1, 0, 1)) - (waypoint.Position * Vector3.new(1, 0, 1))).magnitude <= 2 or not plr.Character.HumanoidRootPart or hNow ~= h
             if waypoint.Action == Enum.PathWaypointAction.Jump then
                 hum.Jump = true
             end
@@ -158,8 +40,89 @@ local function pathfindTo(targetPos)
     end
 end
 
+local autoBlockAnimations = {"rbxassetid://94067586317868", "rbxassetid://107925328038675"} -- like basic slash animations ig
+local autoBlockVar
+local actor = game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent")
+if identifyexecutor() ~= "Xeno" and identifyexecutor() ~= "Solara" then
+    local function trackAnimations(char)
+        local humanoid = char:WaitForChild("Humanoid", 5)
+        if not humanoid then return end
+        
+        local animator = humanoid:WaitForChild("Animator", 5)
+        if not animator then return end
+
+        animator.AnimationPlayed:Connect(function(track)
+            if autoBlockVar and table.find(autoBlockAnimations, track.Animation.AnimationId) then
+                warn("fucking hitting")
+                if killerModel then
+                    local suc, res = pcall(function()
+                        if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - killerModel.HumanoidRootPart.Position).magnitude <= 13 then
+                            _G._Notify("Blocking", "Hit detected, trying to block", 5)
+                            task.wait(Options.AutoBlockMS.Value / 1000)
+                            actor.FireServer(actor, "UseActorAbility", "Block")
+                            _G._Notify("Blocked", "Hit blocked, you might've still taken damage though", 5)
+                        end
+                    end)
+                    if not suc then
+                        warn("error when auto blocking:", res)
+                    end
+                end
+            end
+        end)
+    end
+
+    workspace.Players.Killers.ChildAdded:Connect(function(killer)
+        trackAnimations(killer)
+    end)
+
+    for _, killer in ipairs(workspace.Players.Killers:GetChildren()) do
+        trackAnimations(killer)
+    end
+
+    local killers = game:GetService("ReplicatedStorage").Assets.Killers
+    local function getanims(name)
+        return killers:FindFirstChild(name) and require(killers[name].Config).Animations
+    end
+    local jason = getanims("Slasher")
+    if jason then
+        table.insert(autoBlockAnimations, jason.Slash)
+        table.insert(autoBlockAnimations, jason.Behead)
+        table.insert(autoBlockAnimations, jason.GashingWoundStart)
+    end
+    local mathguy = getanims("1x1x1x1")
+    if mathguy then
+        table.insert(autoBlockAnimations, mathguy.Slash)
+        table.insert(autoBlockAnimations, mathguy.MassInfection)
+        table.insert(autoBlockAnimations, mathguy.Entanglement)
+    end
+    local johndoe = getanims("JohnDoe")
+    if johndoe then
+        table.insert(autoBlockAnimations, johndoe.Slash)
+    end
+    local noli = getanims("Noli")
+    if noli then
+        table.insert(autoBlockAnimations, noli.Stab)
+        table.insert(autoBlockAnimations, noli.VoidRush.StartDashInit)
+    end
+    local coolkid = getanims("c00lkidd")
+    if coolkid then
+        table.insert(autoBlockAnimations, coolkid.Attack)
+        table.insert(autoBlockAnimations, coolkid.WalkspeedOverrideStart)
+    end
+else
+    if _G.useLinoria then
+        Library:Notify("Your executor is bad! Please dont expect many features to run properly", 6)
+    else
+        Library:Notify({
+            Title = "Bad executor",
+            Description = "Your executor is bad! Please dont expect many features to run properly",
+            Time = 6,
+        })
+    end
+end
+
 local repo = _G.useLinoria and "https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/" or "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
-local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
+Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
 
@@ -174,14 +137,15 @@ local function Notify(Title, Text, Duration)
         })
     end
 end
+_G._Notify = Notify
 
-local Options = Library.Options or Options
-local Toggles = Library.Toggles or Toggles
+Options = Library.Options or Options
+Toggles = Library.Toggles or Toggles
 
 local Window
 if not _G.useLinoria then
     Window = Library:CreateWindow({
-        Title = "NXP hub V2",
+        Title = "NXP hub V2.1",
         Footer = "Forsaken",
         Icon = "rbxassetid://130931198530758",
         NotifySide = "Right",
@@ -209,20 +173,22 @@ local Tabs = {
     ["UI Settings"] = Window:AddTab("UI Settings", "wrench"),
 }
 
-local isKiller, isSurvivor, killerModel 
 
 task.spawn(function()
     while task.wait() do
+        local _isKiller = false
         if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers") then
             for _, v in pairs(workspace.Players.Killers:GetChildren()) do
                 if v:GetAttribute("Username") and game.Players:FindFirstChild(v:GetAttribute("Username")) then
                     killerModel = v
                 end
                 if v:GetAttribute("Username") == game.Players.LocalPlayer.Name then
-                    isKiller = true
+                    killerModel = v
+                    _isKiller = true
                 end
             end
-            isSurvivor = not isKiller
+            isSurvivor = not _isKiller
+            isKiller = _isKiller
         end
     end
 end)
@@ -320,7 +286,6 @@ GeneratorsGroup:AddToggle("GeneratorsESPGreen", {
     Text = "Show Green When Done",
 })
 
--- Generators: Nametags
 GeneratorsGroup:AddToggle("GeneratorsNametags", {
     Text = "Generators Nametags",
     Default = false,
@@ -369,7 +334,6 @@ GeneratorsGroup:AddToggle("GeneratorsNametags", {
     end
 })
 
--- Auto Complete Generator
 local generatorsDid = {}
 local activelyAutoing = false
 GeneratorsGroup:AddToggle("AutoCompleteGenerator", {
@@ -414,7 +378,6 @@ GeneratorsGroup:AddToggle("AutoCompleteGenerator", {
     end
 })
 
--- Auto Start Generator
 GeneratorsGroup:AddToggle("AutoStartGenerator", {
     Text = "Auto Start Generator",
     Default = false,
@@ -458,7 +421,6 @@ GeneratorsGroup:AddToggle("AutoStartGenerator", {
     end
 })
 
--- Complete Active Generator
 GeneratorsGroup:AddButton({
     Text = "Complete Active Generator",
     Func = function()
@@ -493,10 +455,12 @@ GeneratorsGroup:AddButton({
     end
 })
 
--- Complete All Generators
 GeneratorsGroup:AddButton({
     Text = "Complete All Generators",
     Func = function()
+        if playingState == "Spectating" then
+            return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
+        end
         if activelyAutoing then return end
         local suc, res = pcall(function()
             if not (workspace.Map and workspace.Map.Ingame and workspace.Map.Ingame.Map) then return end
@@ -554,7 +518,6 @@ GeneratorsGroup:AddButton({
     end
 })
 
--- Aimbot
 local aimbotHeld = false
 local uis = game:GetService("UserInputService")
 uis.InputBegan:Connect(function (i)
@@ -610,7 +573,6 @@ AimbotGroup:AddSlider("PredictionLevel", {
     Rounding = 0,
 })
 
--- Killers ESP
 KillersGroup:AddToggle("KillerESP", {
     Text = "Killer ESP",
     Default = false,
@@ -653,7 +615,47 @@ KillersGroup:AddToggle("KillerESPOutline", {
     Text = "Show Outline",
 })
 
--- Survivors ESP + Coin Flip
+KillersGroup:AddToggle("KillersNametags", {
+    Text = "Killer Nametag",
+    Default = false,
+    Callback = function(bool)
+        _G.killertag = bool
+        task.spawn(function()
+            while task.wait() do
+                if _G.killertag then
+                    pcall(function()
+                        local v = killerModel
+                        if v and not v:FindFirstChild("nametag") then
+                            local bb = Instance.new("BillboardGui", v)
+                            bb.Size = UDim2.new(4, 0, 1, 0)
+                            bb.AlwaysOnTop = true
+                            bb.Name = "nametag"
+                            local text = Instance.new("TextLabel", bb)
+                            text.TextStrokeTransparency = 0
+                            text.Text = "Killer"
+                            text.TextSize = 20
+                            text.BackgroundTransparency = 1
+                            text.Size = UDim2.new(1, 0, 1, 0)
+                        elseif v and v:FindFirstChild("nametag") then
+                            v.nametag.TextLabel.TextColor3 = Options.KillerNametagColor.Value
+                        end
+                    end)
+                else
+                    pcall(function()
+                        if killerModel and killerModel:FindFirstChild("nametag") then
+                            killerModel.nametag:Destroy()
+                        end
+                    end)
+                    break
+                end
+            end
+        end)
+    end
+}):AddColorPicker("KillerNametagColor", {
+    Default = Color3.fromRGB(255, 255, 255),
+    Title = "Color",
+})
+
 SurvivorsGroup:AddToggle("SurvivorESP", {
     Text = "Survivors ESP",
     Default = false,
@@ -668,7 +670,7 @@ SurvivorsGroup:AddToggle("SurvivorESP", {
                                 local hl = Instance.new("Highlight", v)
                                 hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                                 hl.Name = "iskiddedfromneptz"
-                            else
+                            else    
                                 v.iskiddedfromneptz.FillColor = Options.SurvivorsESP.Value
                                 v.iskiddedfromneptz.OutlineTransparency = Toggles.SurvivorsESPOutline.Value and 0 or 1
                             end
@@ -695,6 +697,50 @@ SurvivorsGroup:AddToggle("SurvivorsESPOutline", {
     Text = "Show Outline",
 })
 
+SurvivorsGroup:AddToggle("SurvivorsNametags", {
+    Text = "Survivors Nametag",
+    Default = false,
+    Callback = function(bool)
+        _G.survivorstag = bool
+        task.spawn(function()
+            while task.wait() do
+                if _G.survivorstag then
+                    pcall(function()
+                        for i, v in pairs(workspace.Players.Survivors:GetChildren()) do
+                            if not v:FindFirstChild("nametag") then
+                                local bb = Instance.new("BillboardGui", v)
+                                bb.Size = UDim2.new(4, 0, 1, 0)
+                                bb.AlwaysOnTop = true
+                                bb.Name = "nametag"
+                                local text = Instance.new("TextLabel", bb)
+                                text.TextStrokeTransparency = 0
+                                text.Text = "Survivor"
+                                text.TextSize = 20
+                                text.BackgroundTransparency = 1
+                                text.Size = UDim2.new(1, 0, 1, 0)
+                            elseif v:FindFirstChild("nametag") then
+                                v.nametag.TextLabel.TextColor3 = Options.SurvivorNametagColor.Value
+                            end
+                        end
+                    end)
+                else
+                    pcall(function()
+                        for i, v in pairs(workspace.Players.Survivors:GetChildren()) do
+                            if v:FindFirstChild("nametag") then
+                                v.nametag:Destroy()
+                            end
+                        end
+                    end)
+                    break
+                end
+            end
+        end)
+    end
+}):AddColorPicker("SurvivorNametagColor", {
+    Default = Color3.fromRGB(255, 255, 255),
+    Title = "Color",
+})
+
 SurvivorsGroup:AddToggle("AutoCoinFlip", {
     Text = "Auto Coin Flip",
     Default = false,
@@ -708,7 +754,21 @@ SurvivorsGroup:AddToggle("AutoCoinFlip", {
     end
 })
 
--- Items ESP / Pickup
+SurvivorsGroup:AddToggle("AutoBlock", {
+    Text = "Auto Block",
+    Default = false,
+    Callback = function (cool)
+       autoBlockVar = cool
+    end
+})
+SurvivorsGroup:AddSlider("AutoBlockMS", {
+    Text = "Block Delay [ms]",
+    Default = 110,
+    Min = 0,
+    Max = 300,
+    Rounding = 0
+})
+
 ItemsGroup:AddToggle("ItemsESP", {
     Text = "Items ESP",
     Default = false,
@@ -819,6 +879,9 @@ ItemsGroup:AddButton({
 ItemsGroup:AddButton({
     Text = "Walk To Random Item",
     Func = function()
+        if playingState == "Spectating" then
+            return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
+        end
         pcall(function ()
             local items = {}
             if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
@@ -835,14 +898,25 @@ ItemsGroup:AddButton({
     end
 })
 
--- ========== Local Player Tab ==========
 local StaminaGroup = Tabs["Local Player"]:AddLeftGroupbox("Stamina", "biceps-flexed")
-StaminaGroup:AddButton({
+local oldstamina
+StaminaGroup:AddToggle("InfStamina", {
     Text = "Infinite Stamina",
-    Func = function()
-        require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting).DefaultConfig.MaxStamina = 9999
-        require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting).DefaultConfig.StaminaLoss = 0
-        game.StarterGui:SetCore("SendNotification", { Title = "warning", Text = "this effect wont apply until next round, but you only have to press it once this entire session", Duration = 9 })
+    Callback = function(Val)
+        local sprintmodule = require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting)
+        if Val then
+            oldstamina = sprintmodule.Stamina
+            task.spawn(function()
+                while Toggles.InfStamina.Value do
+                    sprintmodule.Stamina = sprintmodule.MaxStamina
+                    sprintmodule.__staminaChangedEvent:Fire()
+                    task.wait()
+                end
+            end)
+        else
+            sprintmodule.Stamina = oldstamina
+            sprintmodule.__staminaChangedEvent:Fire()
+        end
     end
 })
 StaminaGroup:AddToggle("AlwaysSprint", {
@@ -953,24 +1027,142 @@ NoclipGroup:AddToggle("EnableNoclip", {
     end
 })
 
-local InfJumpGroup = Tabs["Local Player"]:AddLeftGroupbox("Infinite Jump", "wind")
-InfJumpGroup:AddToggle("InfiniteJump", {
-    Text = "Infinite Jump",
+local InfJumpGroup = Tabs["Local Player"]:AddLeftGroupbox("Misc", "wind")
+local up, down
+local uis = game:GetService("UserInputService")
+uis.InputBegan:Connect(function(h,g)
+    if h.KeyCode == Enum.KeyCode.LeftShift then
+        down = true
+    end
+    if h.KeyCode == Enum.KeyCode.Space then
+        if g then return end
+        up = true
+    end
+end)
+uis.InputEnded:Connect(function(h,g)
+    if h.KeyCode == Enum.KeyCode.LeftShift then
+        down = false
+    end
+    if h.KeyCode == Enum.KeyCode.Space then
+        if g then return end
+        up = false
+    end
+end)
+local localPlayer = game.Players.LocalPlayer
+local fly = InfJumpGroup:AddToggle("InfiniteJump", {
+    Text = "Fly",
     Default = false,
-    Callback = function (s)
-        if s == false then
-            if _G.connection then _G.connection:Disconnect() end
-            return
-        end
-        _G.connection = game:GetService("UserInputService").JumpRequest:Connect(function ()
-            pcall(function ()
-                game.Players.LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-            end)
+    Callback = function ()
+        task.spawn(function()
+            while Toggles.InfiniteJump.Value and task.wait() do
+                if localPlayer.Character then
+                    local root = localPlayer.Character:FindFirstChild("Humanoid") and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        local vel = 2.45
+                        if up then
+                            vel = vel + Options.FlyVerticalSpeed.Value - 2.45
+                        end
+                        if down then
+                            vel = vel - Options.FlyVerticalSpeed.Value + 2.45
+                        end
+                        if root then
+                            root.Velocity = Vector3.new(root.Velocity.X, vel, root.Velocity.Z)
+                            if localPlayer.Character.Humanoid.MoveDirection ~= Vector3.zero then
+                                localPlayer.Character:TranslateBy(localPlayer.Character.Humanoid.MoveDirection * Options.FlySpeed.Value * game:GetService("RunService").RenderStepped:Wait())
+                            end
+                        end
+                    end
+                end
+            end
         end)
     end
 })
+fly:AddKeyPicker("KeyPicker", {
+	Default = "Z",
+	Text = "fly keybind",
+	NoUI = false,
+	Callback = function()
+        print("h")
+		Toggles.InfiniteJump:SetValue(not Toggles.InfiniteJump.Value)
+	end,
+})
+InfJumpGroup:AddSlider("FlySpeed", {
+    Text = "Fly Speed",
+    Default = 50,
+    Min = 10,
+    Max = 150,
+    Rounding = 0,
+})
+InfJumpGroup:AddSlider("FlyVerticalSpeed", {
+    Text = "Fly Vertical Speed",
+    Default = 34,
+    Min = 7,
+    Max = 80,
+    Rounding = 0,
+})
 
--- ========== Killer Tab ==========
+local loopRunning, loopThread, currentAnim
+InfJumpGroup:AddToggle("Invis", {
+    Text = "Invisibility",
+    Default = false,
+    Callback = function(Value)
+        if game.PlaceId ~= 18687417158 then
+            if not Value then return end
+            return Notify("Please use in real forsaken", "Invisibility doesnt work in games that are not the real forsaken", 8)
+        end
+        if Value then
+            loopRunning = true
+            loopThread = task.spawn(function()
+                while loopRunning do
+                    local hum = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") and localPlayer.Character:FindFirstChild("Humanoid")
+                    if hum then
+                        -- this shit has to lag in some way
+                        local anim = Instance.new("Animation")
+                        anim.AnimationId = "rbxassetid://75804462760596"
+                        local loadedAnim = hum:LoadAnimation(anim)
+                        currentAnim = loadedAnim
+                        loadedAnim.Looped = false
+                        loadedAnim:Play()
+                        loadedAnim:AdjustSpeed(0)
+                        for _, v in pairs(localPlayer.Character:GetChildren()) do
+                            if v:IsA("BasePart") then
+                                v.CanCollide = false
+                            end
+                        end
+                    end
+                    task.wait()
+                end
+            end)
+        else
+            loopRunning = false
+            if loopThread then
+                loopRunning = false
+                task.cancel(loopThread)
+            end
+            if currentAnim then
+                currentAnim:Stop()
+                currentAnim = nil
+            end
+            local Humanoid = localPlayer.Character and (localPlayer.Character:FindFirstChildOfClass("Humanoid") or localPlayer.Character:FindFirstChildOfClass("AnimationController"))
+            if Humanoid then
+                for _, v in pairs(Humanoid:GetPlayingAnimationTracks()) do
+                    v:AdjustSpeed(100000)
+                end
+                for _, v in pairs(localPlayer.Character:GetChildren()) do
+                    if v:IsA("BasePart") then
+                        v.CanCollide = true
+                    end
+                end
+            end
+            local animateScript = localPlayer.Character and localPlayer.Character:FindFirstChild("Animate")
+            if animateScript then
+                animateScript.Disabled = true
+                animateScript.Disabled = false
+            end
+        end
+    end
+})
+
 local KillerGroup = Tabs.Killer:AddLeftGroupbox("Killer", "skull")
 local KillerMisc = Tabs.Killer:AddRightGroupbox("Misc", "cloud")
 KillerGroup:AddToggle("AllowKillerEntrances", {
@@ -1000,8 +1192,9 @@ KillerGroup:AddToggle("AllowKillerEntrances", {
                             break
                         end
                         pcall(function ()
-                            if workspace.Map.Ingame.Map:FindFirstChild("KillerOnlyEntrances") then
-                                for _, v in pairs(workspace.Map.Ingame.Map.KillerOnlyEntrances:GetChildren()) do
+                            local walls = workspace.Map.Ingame.Map:FindFirstChild("Killer_Only Wall") or workspace.Map.Ingame.Map:FindFirstChild("KillerOnlyEntrances")
+                            if walls then
+                                for _, v in pairs(walls:GetChildren()) do
                                     v.CanCollide = false
                                 end
                             end
@@ -1033,6 +1226,9 @@ KillerGroup:AddToggle("SpectateKiller", {
 KillerGroup:AddButton({
     Text = "Teleport To Killer",
     Func = function ()
+        if playingState == "Spectating" then
+            return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
+        end
         local killer = workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers") and workspace.Players.Killers:GetChildren()[1]
         if killer then
             pcall(function ()
@@ -1045,6 +1241,9 @@ KillerGroup:AddButton({
 KillerGroup:AddButton({
     Text = "Teleport To Random Survivor",
     Func = function()
+        if playingState == "Spectating" then
+            return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
+        end
         pcall(function()
             if not (workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors")) then return end
             local survs = workspace.Players.Survivors:GetChildren()
@@ -1057,6 +1256,12 @@ KillerGroup:AddButton({
 KillerGroup:AddToggle('KillAll', {
     Text = "Kill All",
     Callback = function(s)
+        if playingState == "Spectating" then
+            return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
+        end
+        if isSurvivor then
+            return Notify("Please be killer", "To use this feature, you must be killer", 7)
+        end
         if not Toggles.KillAll.Value then return end
         if game.Players.LocalPlayer:GetNetworkPing() >= 0.3 then
             Toggles.KillAll:SetValue(false)
@@ -1093,6 +1298,9 @@ KillerMisc:AddButton({
     Text = "Walk To Random Survivor",
     Func = function()
         task.spawn(function()
+            if playingState == "Spectating" then
+                return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
+            end
             pcall(function()
                 if not (workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors")) then return end
                 local survs = workspace.Players.Survivors:GetChildren()
@@ -1153,7 +1361,6 @@ KillerMisc:AddToggle("SlashAura", {
                 if hrp then
                     local yh = getASurvivor(Options.SlashAuraRange.Value)
                     if yh then
-                        print("lowkey found him bro")
                         game:GetService("ReplicatedStorage").Modules.Network.RemoteEvent:FireServer("UseActorAbility", "Slash")
                         game:GetService("ReplicatedStorage").Modules.Network.RemoteEvent:FireServer("UseActorAbility", "Punch")
                     end
@@ -1173,9 +1380,65 @@ KillerMisc:AddSlider("SlashAuraRange", {
 })
 
 KillerMisc:AddToggle("HitboxExpander", { 
-    Text = "Beta Hitbox Expander",
+    Text = "Reach Expander",
     Default = false,
 })
+
+KillerMisc:AddButton({
+    Text = "Fling Killer",
+    Func = function()
+        if isKiller then
+            return Notify("Trying to fling yourself", "you're the killer buddy", 7)
+        end
+        if playingState == "Spectating" then
+            return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
+        end
+        pcall(function()
+            if killerModel and isSurvivor then
+                local hrp = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local fail = tick()
+                    local old = hrp.CFrame
+                    for _, v in pairs(localPlayer.Character:GetChildren()) do
+                        if v:IsA("BasePart") then
+                            v.CanCollide = false
+                        end
+                    end
+                    repeat
+                        hrp.Velocity = Vector3.new(0, -10000, 0)
+                        hrp.CFrame = killerModel.HumanoidRootPart.CFrame
+                        if killerModel.HumanoidRootPart.Velocity.magnitude >= 50 then
+                            Notify("Success?", "If the killer got fling, he will respawn in a random spot, or in very rare cases he will die", 7)
+                            break
+                        end
+                        task.wait()
+                    until tick() - fail >= 3
+                    for _, v in pairs(localPlayer.Character:GetChildren()) do
+                        if v:IsA("BasePart") then
+                            v.CanCollide = true
+                        end
+                    end
+                    hrp.Velocity = Vector3.zero
+                    hrp.CFrame = old
+                end
+            end
+        end)
+    end
+})
+-- hitbox expander improvements bro 🥀
+--[[workspace.Hitboxes.ChildAdded:Connect(function(v)
+    if string.find(v.Name, game.Players.LocalPlayer.Name) and Toggles.HitboxExpander.Value then
+        local rooting = game.Players.LocalPlayer.Character.HumanoidRootPart
+        local startCF = rooting.CFrame
+        local shit = rooting.CFrame.LookVector
+        local t = tick()
+        while ((tick() - t) <= (game.Players.LocalPlayer:GetNetworkPing() + 0.6)) and task.wait() do
+            rooting.CFrame = startCF
+            rooting.AssemblyLinearVelocity = shit * ((tick() - t) * 200)
+        end
+        rooting.AssemblyLinearVelocity, rooting.Velocity = Vector3.zero, Vector3.zero
+    end
+end)]]
 workspace.Hitboxes.ChildAdded:Connect(function(v)
     if string.find(v.Name, game.Players.LocalPlayer.Name) and Toggles.HitboxExpander.Value then
         local rooting = game.Players.LocalPlayer.Character.HumanoidRootPart
@@ -1184,18 +1447,20 @@ workspace.Hitboxes.ChildAdded:Connect(function(v)
         local t = tick()
         while ((tick() - t) <= (game.Players.LocalPlayer:GetNetworkPing() + 0.6)) and task.wait() do
             rooting.CFrame = startCF
-            rooting.AssemblyLinearVelocity = shit * 70
+            rooting.AssemblyLinearVelocity = shit + (rooting.AssemblyLinearVelocity + (shit * 11))
         end
         rooting.AssemblyLinearVelocity, rooting.Velocity = Vector3.zero, Vector3.zero
     end
 end)
 
--- ========== Teleport Tab ==========
 local GensTP = Tabs.Teleport:AddLeftGroupbox("Generators Teleport", "pin")
 for i = 1, 5 do
     GensTP:AddButton({
         Text = "Teleport To Generator " .. i,
         Func = function ()
+            if playingState == "Spectating" then
+                return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
+            end
             pcall(function ()
                 if not (workspace.Map and workspace.Map.Ingame and workspace.Map.Ingame.Map) then return end
                 local gens = {}
@@ -1216,6 +1481,9 @@ for i = 1, 5 do
     GensTP:AddButton({
         Text = "Walk To Generator " .. i,
         Func = function ()
+            if playingState == "Spectating" then
+                return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
+            end
             local s, r = pcall(function ()
                 if not (workspace.Map and workspace.Map.Ingame and workspace.Map.Ingame.Map) then return end
                 local gens = {}
@@ -1238,6 +1506,9 @@ ItemsTP:AddButton({
     Func = function ()
         local items = {}
         pcall(function ()
+            if playingState == "Spectating" then
+                return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
+            end
             if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
                 for _, v in pairs(workspace.Map.Ingame:GetDescendants()) do
                     if v:IsA("Tool") then
@@ -1252,7 +1523,6 @@ ItemsTP:AddButton({
     end
 })
 
--- ========== Misc Tab ==========
 local MiscGroup = Tabs.Misc:AddLeftGroupbox("Miscallenous", "circle-question-mark")
 MiscGroup:AddToggle("AllowJump", {
     Text = "Allow Jump",
@@ -1324,6 +1594,46 @@ MiscGroup:AddToggle('IZD', {
         game.Players.LocalPlayer.DevCameraOcclusionMode = Enum.DevCameraOcclusionMode[state and "Invisicam" or "Zoom"]
     end
 })
+
+pcall(function()
+    --[[require(game.ReplicatedStorage.Modules.Util).OnPlayingStateChanged(function(arg1_3)
+        playingState = arg1_3
+        Notify("Playing state", arg1_3, 7)
+        task.wait(0.3)
+        if Toggles.AlwaysShowChat.Value then
+            game:GetService("TextChatService"):FindFirstChildOfClass("ChatWindowConfiguration").Enabled = true
+        end
+    end)]]
+    if workspace.Players.Spectating:FindFirstChild(localPlayer.Name) then
+        playingState = "Spectating"
+    else
+        playingState = "Playing"
+    end
+    workspace.Players.Spectating.ChildAdded:Connect(function(v)
+        if v.Name == localPlayer.Name then
+            playingState = "Spectating"
+            Notify("Playing state", playingState, 7)
+        end
+    end)
+    workspace.Players.Spectating.ChildRemoved:Connect(function(v)
+        if v.Name == localPlayer.Name then
+            playingState = "Playing"
+            Notify("Playing state", "In Round", 7)
+        end
+    end)
+    MiscGroup:AddToggle('AlwaysShowChat', {
+        Text = "Always Show Chat",
+        Callback = function(state)
+            if state then
+                game:GetService("TextChatService"):FindFirstChildOfClass("ChatWindowConfiguration").Enabled = true
+            else
+                if playingState ~= "Spectating" then
+                    game:GetService("TextChatService"):FindFirstChildOfClass("ChatWindowConfiguration").Enabled = false
+                end
+            end
+        end
+    })
+end)
 
 local PopupsGroup = Tabs.Misc:AddRightGroupbox("Popups", "triangle-alert")
 PopupsGroup:AddToggle("AutoRemove1x1x1x1", {
@@ -1418,7 +1728,6 @@ else
     MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'End', NoUI = true, Text = 'Menu keybind' })
 end
 Library.ToggleKeybind = Options.MenuKeybind
--- Managers
 if not _G.useLinoria then
     ThemeManager:SetLibrary(Library)
     ThemeManager:ApplyToTab(Tabs["UI Settings"])
