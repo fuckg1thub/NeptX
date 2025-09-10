@@ -52,7 +52,7 @@ if identifyexecutor() ~= "Xeno" and identifyexecutor() ~= "Solara" then
         if not animator then return end
 
         animator.AnimationPlayed:Connect(function(track)
-            if autoBlockVar and table.find(autoBlockAnimations, track.Animation.AnimationId) then
+            if isSurvivor and autoBlockVar and table.find(autoBlockAnimations, track.Animation.AnimationId) then
                 warn("fucking hitting")
                 if killerModel then
                     local suc, res = pcall(function()
@@ -150,7 +150,7 @@ if not _G.useLinoria then
         Icon = "rbxassetid://130931198530758",
         NotifySide = "Right",
         ShowCustomCursor = true,
-        Size = UDim2.fromOffset(736, 361)
+        Size = UDim2.fromOffset(736, 400)
     })
 else
     Window = Library:CreateWindow({
@@ -169,6 +169,7 @@ local Tabs = {
     ["Local Player"] = Window:AddTab("Local Player", "user"),
     Killer = Window:AddTab("Killer", "skull"),
     Teleport = Window:AddTab("Locations", "pin"),
+    Anti = Window:AddTab("Antis", "ban"),
     Misc = Window:AddTab("Misc", "cloudy"),
     ["UI Settings"] = Window:AddTab("UI Settings", "wrench"),
 }
@@ -785,7 +786,18 @@ ItemsGroup:AddToggle("ItemsESP", {
                 if _G.items == true then
                     pcall(function()
                         if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
-                            for _, v in pairs(workspace.Map.Ingame:GetDescendants()) do
+                            for _, v in pairs(workspace.Map.Ingame:GetChildren()) do
+                                if v:IsA("Tool") and not v:FindFirstChild("iskiddedfromneptz") then
+                                    local hl = Instance.new("Highlight", v)
+                                    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                                    hl.Name = "iskiddedfromneptz"
+                                    hl.OutlineTransparency = 1
+                                elseif v:IsA("Tool") and v:FindFirstChild("iskiddedfromneptz") then
+                                    v.iskiddedfromneptz.FillColor = Options.ItemsESPColor.Value
+                                    v.iskiddedfromneptz.OutlineTransparency = Toggles.ItemsESPOutline.Value and 0 or 1
+                                end
+                            end
+                            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
                                 if v:IsA("Tool") and not v:FindFirstChild("iskiddedfromneptz") then
                                     local hl = Instance.new("Highlight", v)
                                     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
@@ -1393,6 +1405,7 @@ KillerMisc:AddToggle("HitboxExpander", {
 KillerMisc:AddButton({
     Text = "Fling Killer",
     Func = function()
+        Notify("warning", "this feature kinda only works in some certain fake forsaken games cuz forsaken has collision stuff", 7)
         if isKiller then
             return Notify("Trying to fling yourself", "you're the killer buddy", 7)
         end
@@ -1431,29 +1444,16 @@ KillerMisc:AddButton({
         end)
     end
 })
--- hitbox expander improvements bro 🥀
---[[workspace.Hitboxes.ChildAdded:Connect(function(v)
-    if string.find(v.Name, game.Players.LocalPlayer.Name) and Toggles.HitboxExpander.Value then
-        local rooting = game.Players.LocalPlayer.Character.HumanoidRootPart
-        local startCF = rooting.CFrame
-        local shit = rooting.CFrame.LookVector
-        local t = tick()
-        while ((tick() - t) <= (game.Players.LocalPlayer:GetNetworkPing() + 0.6)) and task.wait() do
-            rooting.CFrame = startCF
-            rooting.AssemblyLinearVelocity = shit * ((tick() - t) * 200)
-        end
-        rooting.AssemblyLinearVelocity, rooting.Velocity = Vector3.zero, Vector3.zero
-    end
-end)]]
+
 workspace.Hitboxes.ChildAdded:Connect(function(v)
     if string.find(v.Name, game.Players.LocalPlayer.Name) and Toggles.HitboxExpander.Value then
         local rooting = game.Players.LocalPlayer.Character.HumanoidRootPart
         local startCF = rooting.CFrame
-        local shit = rooting.CFrame.LookVector
+        local shit = v.CFrame.LookVector
         local t = tick()
         while ((tick() - t) <= (game.Players.LocalPlayer:GetNetworkPing() + 0.6)) and task.wait() do
             rooting.CFrame = startCF
-            rooting.AssemblyLinearVelocity = shit + (rooting.AssemblyLinearVelocity + (shit * 11))
+            rooting.AssemblyLinearVelocity = shit * (v.Size.Z * 10)
         end
         rooting.AssemblyLinearVelocity, rooting.Velocity = Vector3.zero, Vector3.zero
     end
@@ -1576,7 +1576,7 @@ MiscGroup:AddButton({
     Text = "Kill Yourself",
     Func = function ()
         pcall(function ()
-            game.Players.LocalPlayer.Character:BreakJoints()
+            game.Players.LocalPlayer.Character.Humanoid.Health = 0
         end)
     end
 })
@@ -1601,15 +1601,76 @@ MiscGroup:AddToggle('IZD', {
     end
 })
 
-pcall(function()
-    --[[require(game.ReplicatedStorage.Modules.Util).OnPlayingStateChanged(function(arg1_3)
-        playingState = arg1_3
-        Notify("Playing state", arg1_3, 7)
-        task.wait(0.3)
-        if Toggles.AlwaysShowChat.Value then
-            game:GetService("TextChatService"):FindFirstChildOfClass("ChatWindowConfiguration").Enabled = true
+local Players = game:GetService("Players")
+local plr = Players.LocalPlayer
+
+local injuredAnims = {
+    Idle = "rbxassetid://134624270247120",
+    Walk = "rbxassetid://132377038617766",
+    Run = "rbxassetid://115946474977409"
+}
+
+local originalAnims = {}
+_G.FakeInjured = false
+
+local function setAnims(char, useInjured)
+    local animate = char:FindFirstChild("Animate")
+    if not animate then return end
+    local function setAnim(folderName, newId)
+        local folder = animate:FindFirstChild(folderName)
+        if not folder then return end
+        for _, anim in ipairs(folder:GetChildren()) do
+            if anim:IsA("Animation") then
+                if not originalAnims[anim] then
+                    originalAnims[anim] = anim.AnimationId
+                end
+                anim.AnimationId = useInjured and newId or originalAnims[anim]
+            end
         end
-    end)]]
+    end
+    setAnim("idle", injuredAnims.Idle)
+    setAnim("walk", injuredAnims.Walk)
+    setAnim("run", injuredAnims.Run)
+end
+
+local function refreshAnims(char)
+    local animate = char:FindFirstChild("Animate")
+    if animate then
+        animate.Disabled = true
+        animate.Disabled = false
+    end
+end
+
+local function apply(char, state)
+    setAnims(char, state)
+    refreshAnims(char)
+end
+
+local function hookChar()
+    plr.CharacterAdded:Connect(function(c)
+        c:WaitForChild("Animate")
+        if _G.FakeInjured then
+            task.wait(0.1)
+            apply(c, true)
+        end
+    end)
+end
+
+hookChar()
+
+MiscGroup:AddToggle("FakeInjure", {
+    Text = "Fake Injured Animations",
+    Callback = function(value)
+        _G.FakeInjured = value
+        local char = plr.Character
+        if char and char:FindFirstChild("Animate") then
+            apply(char, value)
+        end
+    end
+})
+
+
+pcall(function()
     if workspace.Players.Spectating:FindFirstChild(localPlayer.Name) then
         playingState = "Spectating"
     else
@@ -1641,9 +1702,9 @@ pcall(function()
     })
 end)
 
-local PopupsGroup = Tabs.Misc:AddRightGroupbox("Popups", "triangle-alert")
-PopupsGroup:AddToggle("AutoRemove1x1x1x1", {
-    Text = "Auto Remove 1x1x1x1 popups",
+local AntiGroup = Tabs.Anti:AddLeftGroupbox("Anti", "ban")
+AntiGroup:AddToggle("AutoRemove1x1x1x1", {
+    Text = "Anti 1x1x1x1 popups",
     Default = false,
     Callback = function (bool)
         _G.no1x= bool
@@ -1656,6 +1717,140 @@ PopupsGroup:AddToggle("AutoRemove1x1x1x1", {
                 end
             end
         end)
+    end
+})
+AntiGroup:AddToggle("AntiStun", {
+    Text = "Anti Stun",
+    Default = false,
+    Callback = function ()
+        task.spawn(function ()
+            while Toggles.AntiStun.Value and task.wait() do
+                if localPlayer.Character and localPlayer.Character:FindFirstChild("SpeedMultipliers") then
+                    if localPlayer.Character.SpeedMultipliers:FindFirstChild("Stunned") then
+                        localPlayer.Character.SpeedMultipliers:FindFirstChild("Stunned").Value = 1
+                    end
+                end
+            end
+        end)
+    end
+})
+AntiGroup:AddToggle("AntiSlow", {
+    Text = "Anti Slow",
+    Default = false,
+    Callback = function ()
+        task.spawn(function ()
+            while Toggles.AntiSlow.Value and task.wait() do
+                if localPlayer.Character and localPlayer.Character:FindFirstChild("SpeedMultipliers") then
+                    for i, v in localPlayer.Character.SpeedMultipliers:GetChildren() do
+                        if v.Value < 1 then
+                            v.Value = 1
+                        end
+                    end
+                end
+            end
+        end)
+    end
+})
+AntiGroup:AddToggle("AntiBlindness", {
+    Text = "Anti Blindness",
+    Default = false,
+    Callback = function ()
+        task.spawn(function ()
+            while Toggles.AntiBlindness.Value and task.wait() do
+                if game.Lighting:FindFirstChild("BlindnessBlur") then
+                    game.Lighting.BlindnessBlur:Destroy()
+                end
+            end
+        end)
+    end
+})
+AntiGroup:AddToggle("AntiSubspace", {
+    Text = "Anti Subspace",
+    Default = false,
+    Callback = function ()
+        task.spawn(function ()
+            while Toggles.AntiSubspace.Value and task.wait() do
+                local subspace = {
+                    "SubspaceVFXBlur",
+                    "SubspaceVFXColorCorrection"
+                }
+                for i, v in pairs(subspace) do
+                    if game.Lighting:FindFirstChild(v) then
+                        game.Lighting[v]:Destroy()
+                    end
+                end
+            end
+        end)
+    end
+})
+AntiGroup:AddToggle("AntiFootsteps", {
+    Text = "Anti Footsteps",
+    Default = false,
+})
+pcall(function()
+    local old; old = hookmetamethod(game, "__namecall", function (self, ...)
+        local args = {...}
+        if Toggles.AntiFootsteps.Value and args[1] == "FootstepPlayed" and type(args[2]) == "number" then
+            warn("no footstep")
+            return 
+        end
+        return old(self, unpack(args))
+    end)
+end)
+
+local Players = game:GetService("Players")
+local originalValues = {}
+local paths = {
+    "HideKillerWins",
+    "HidePlaytime",
+    "HideSurvivorWins"
+}
+local function saveOriginals(player)
+    if not originalValues[player.UserId] then
+        originalValues[player.UserId] = {}
+    end
+    for _, key in ipairs(paths) do
+        local value = player.PlayerData.Settings.Privacy:FindFirstChild(key)
+        originalValues[player.UserId][key] = value.Value
+    end
+end
+local function reveal(player)
+    for _, key in ipairs(paths) do
+        local value = player.PlayerData.Settings.Privacy:FindFirstChild(key)
+        value.Value = false
+    end
+end
+local function restore(player)
+    if originalValues[player.UserId] then
+        for key, val in pairs(originalValues[player.UserId]) do
+            local value = player.PlayerData.Settings.Privacy:FindFirstChild(key)
+            value.Value = val
+        end
+    end
+end
+local function hiddenStatsFunc(disable)
+    for _, player in ipairs(Players:GetPlayers()) do
+        if disable then
+            saveOriginals(player)
+            reveal(player)
+        else
+            restore(player)
+        end
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    if toggleState == true then
+        saveOriginals(player)
+        reveal(player)
+    end
+end)
+AntiGroup:AddToggle("AntiHiddenStats", {
+    Text = "Anti Hidden Stats",
+    Default = false,
+    Tooltip = "lets you view peoples stats even if they are off",
+    Callback = function(value)
+        hiddenStatsFunc(value)
     end
 })
 
