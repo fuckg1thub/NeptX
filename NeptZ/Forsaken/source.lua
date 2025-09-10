@@ -381,7 +381,7 @@ GeneratorsGroup:AddToggle("AutoCompleteGenerator", {
                                             "Finished puzzle " .. i,
                                             4
                                         )
-                                        task.wait(Options.GeneratorDelay.Value)
+                                        task.wait(Options.GeneratorDelay1.Value < Options.GeneratorDelay2.Value and math.random(Options.GeneratorDelay1.Value, Options.GeneratorDelay2.Value) or math.random(Options.GeneratorDelay2.Value, Options.GeneratorDelay1.Value))
                                     end
                                     activelyAutoing = false
                                     return ""
@@ -467,7 +467,7 @@ GeneratorsGroup:AddButton({
                                         4
                                     )
                                     v.Remotes.RE:FireServer()
-                                    task.wait(Options.GeneratorDelay.Value)
+                                    task.wait(Options.GeneratorDelay1.Value < Options.GeneratorDelay2.Value and math.random(Options.GeneratorDelay1.Value, Options.GeneratorDelay2.Value) or math.random(Options.GeneratorDelay2.Value, Options.GeneratorDelay1.Value))
                                 end
                             end
                         end
@@ -532,7 +532,7 @@ GeneratorsGroup:AddButton({
                                 4
                             )
                             v.Remotes.RE:FireServer()
-                            task.wait(Options.GeneratorDelay.Value)
+                            task.wait(Options.GeneratorDelay1.Value < Options.GeneratorDelay2.Value and math.random(Options.GeneratorDelay1.Value, Options.GeneratorDelay2.Value) or math.random(Options.GeneratorDelay2.Value, Options.GeneratorDelay1.Value))
                         end
                     end)
                 end
@@ -544,13 +544,20 @@ GeneratorsGroup:AddButton({
     end
 })
 
-GeneratorsGroup:AddSlider("GeneratorDelay", {
-    Text = "Puzzle Interval",
+GeneratorsGroup:AddSlider("GeneratorDelay1", {
+    Text = "Puzzle Delay 1",
     Default = 1.2,
     Min = 1.2,
     Max = 16,
     Rounding = 1,
-    Tooltip = "the delay in which each puzzle 1-4 will be completed (seconds)"
+})
+
+GeneratorsGroup:AddSlider("GeneratorDelay2", {
+    Text = "Puzzle Delay 2",
+    Default = 1.2,
+    Min = 1.2,
+    Max = 16,
+    Rounding = 1,
 })
 
 local aimbotHeld = false
