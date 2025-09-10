@@ -870,9 +870,12 @@ local function backstab(model)
     else
         local stabbing = tick()
         local oldCf = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+        task.spawn(function()
+            task.wait(0.2)
+            game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "Dagger")
+        end)
         repeat
             game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = model.HumanoidRootPart.CFrame - (model.HumanoidRootPart.CFrame.LookVector * 1)
-            game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "Dagger")
             task.wait()
         until (tick() - stabbing >= 3.5) or hasNotification("stab")
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = oldCf
@@ -2181,6 +2184,36 @@ if canDoRequire then
         end
     });
 end
+
+local function unlock(achieve)
+   local remote = game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent")
+   remote:FireServer("UnlockAchievement", achieve)
+end
+local BadgeGroup = Tabs.Misc:AddRightGroupbox("Achievements", "award")
+BadgeGroup:AddButton({
+   Text = "\".\"",
+   Func = function() unlock("MeetBrandon") end,
+})
+
+BadgeGroup:AddButton({
+   Text = "\"Meow meow meow\"",
+   Func = function() unlock("ILoveCats") end,
+})
+
+BadgeGroup:AddButton({
+   Text = "\"Coming straight from YOUR house\"",
+   Func = function() unlock("TVTIME") end,
+})
+
+BadgeGroup:AddButton({
+   Text = "\"A Captain and his Ship\"",
+   Func = function() unlock("MeetDemophon") end,
+})
+
+BadgeGroup:AddButton({
+   Text = "\"Black, white, and gray\"",
+   Func = function() unlock("Morality") end,
+})
 
 if not _G.useLinoria then
     local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu", "wrench")
