@@ -1026,6 +1026,24 @@ ItemsESPGroup:AddToggle("ItemsNametags", {
                                     end
                                 end
                             end
+                            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+                                if v:IsA("Tool") then
+                                    if not v:FindFirstChild("tool_nametag") then
+                                        local bb = Instance.new("BillboardGui", v)
+                                        bb.Size = UDim2.new(4, 0, 1, 0)
+                                        bb.AlwaysOnTop = true
+                                        bb.Name = "tool_nametag"
+                                        local text = Instance.new("TextLabel", bb)
+                                        text.TextStrokeTransparency = 0
+                                        text.Text = (v.Name == "BloxyCola" and "Bloxy Cola") or v.Name
+                                        text.TextSize = 15
+                                        text.BackgroundTransparency = 1
+                                        text.Size = UDim2.new(1, 0, 1, 0)
+                                    elseif v:FindFirstChild("tool_nametag") then
+                                        v.tool_nametag.TextLabel.TextColor3 = Options.itemNametagColor.Value
+                                    end
+                                end
+                            end
                         end
                     end)
                 else
