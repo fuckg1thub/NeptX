@@ -303,13 +303,13 @@ GeneratorsGroup:AddToggle("GeneratorsNametags", {
                                     bb.AlwaysOnTop = true
                                     bb.Name = "nametag"
                                     local text = Instance.new("TextLabel", bb)
-                                    text.TextColor3 = Color3.fromRGB(255, 255, 255)
                                     text.TextStrokeTransparency = 0
                                     text.Text = "Generator (" .. (v:FindFirstChild("Progress") and v.Progress.Value or 0) .. "%)"
                                     text.TextSize = 20
                                     text.BackgroundTransparency = 1
                                     text.Size = UDim2.new(1, 0, 1, 0)
                                 elseif v:FindFirstChild("nametag") and v.Name == "Generator" then
+                                    v.nametag.TextLabel.TextColor3 = Options.GeneratorsNametagsColor.Value
                                     if v:FindFirstChild("Progress") then
                                         v.nametag.TextLabel.Text = "Generator (" .. v.Progress.Value .. "%)"
                                     end
@@ -332,6 +332,9 @@ GeneratorsGroup:AddToggle("GeneratorsNametags", {
             end
         end)
     end
+}):AddColorPicker("GeneratorsNametagsColor", {
+    Default = Color3.fromRGB(255, 255, 255),
+    Title = "Nametag Color",
 })
 
 local generatorsDid = {}
@@ -1309,7 +1312,7 @@ KillerMisc:AddButton({
                 local target = survs[math.random(1, #survs)]
                 local hrp = target:WaitForChild("HumanoidRootPart")
 
-                while target.Parent and hrp and hrp.Parent do
+                while target.Parent and hrp and hrp.Parent and (localPlayer.Character.Humanoid.Position - hrp.Position).magnitude >= 5 do
                     pathfindTo(hrp.Position)
                     task.wait(0.3)
                 end
