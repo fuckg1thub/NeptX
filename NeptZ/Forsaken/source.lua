@@ -1352,7 +1352,7 @@ InfJumpGroup:AddSlider("FlyVerticalSpeed", {
     Rounding = 0,
 })
 
-local loopRunning, loopThread, currentAnim
+local loopRunning, loopThread, currentAnim, lastAnim
 InfJumpGroup:AddToggle("Invis", {
     Text = "Invisibility",
     Default = false,
@@ -1367,7 +1367,13 @@ InfJumpGroup:AddToggle("Invis", {
                 while loopRunning do
                     local hum = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") and localPlayer.Character:FindFirstChild("Humanoid")
                     if hum then
-                        -- this shit has to lag in some way
+                        for _, v in pairs(localPlayer.Character:GetChildren()) do
+                            if v:IsA("BasePart") then
+                                v.CanCollide = false
+                            end
+                        end
+                    end
+                    if hum then
                         local anim = Instance.new("Animation")
                         anim.AnimationId = "rbxassetid://75804462760596"
                         local loadedAnim = hum:LoadAnimation(anim)
@@ -1375,11 +1381,13 @@ InfJumpGroup:AddToggle("Invis", {
                         loadedAnim.Looped = false
                         loadedAnim:Play()
                         loadedAnim:AdjustSpeed(0)
-                        for _, v in pairs(localPlayer.Character:GetChildren()) do
-                            if v:IsA("BasePart") then
-                                v.CanCollide = false
-                            end
+                        if lastAnim then
+                            lastAnim:Stop()
+                            lastAnim:Destroy()
                         end
+                        lastAnim = currentAnim
+                    else
+                        currentAnim = nil
                     end
                     task.wait()
                 end
