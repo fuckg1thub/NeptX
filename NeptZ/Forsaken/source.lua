@@ -878,6 +878,7 @@ local function backstab(model)
             game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = model.HumanoidRootPart.CFrame - (model.HumanoidRootPart.CFrame.LookVector * 1)
             task.wait()
         until (tick() - stabbing >= 3.5) or hasNotification("stab")
+        task.wait(0.5)
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = oldCf
     end
 end
@@ -912,7 +913,7 @@ SurvivorsGroup:AddToggle("DaggerAura", {
     Callback = function(cool)
         task.spawn(function()
             while Toggles.DaggerAura.Value and task.wait(0.1) do
-                if hasAbilityReady("Dagger") and isSurvivor then
+                if not Toggles.AutoDagger.Value and hasAbilityReady("Dagger") and isSurvivor then
                     local suc, res = pcall(backstabClose, killerModel)
                     if not suc then
                         warn("error when backstabbing near killer:", res)
@@ -1353,6 +1354,7 @@ InfJumpGroup:AddSlider("FlyVerticalSpeed", {
 })
 
 local loopRunning, loopThread, currentAnim, lastAnim
+local animDeleteTick = tick()
 InfJumpGroup:AddToggle("Invis", {
     Text = "Invisibility",
     Default = false,
@@ -1381,7 +1383,8 @@ InfJumpGroup:AddToggle("Invis", {
                         loadedAnim.Looped = false
                         loadedAnim:Play()
                         loadedAnim:AdjustSpeed(0)
-                        if lastAnim then
+                        if lastAnim and tick() - animDeleteTick > 1 then
+                            animDeleteTick = tick()
                             lastAnim:Stop()
                             lastAnim:Destroy()
                         end
