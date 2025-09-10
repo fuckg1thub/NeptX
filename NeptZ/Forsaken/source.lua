@@ -1355,6 +1355,9 @@ InfJumpGroup:AddSlider("FlyVerticalSpeed", {
 
 local loopRunning, loopThread, currentAnim, lastAnim
 local animDeleteTick = tick()
+local anims = {}
+local anim = Instance.new("Animation")
+anim.AnimationId = "rbxassetid://75804462760596"
 InfJumpGroup:AddToggle("Invis", {
     Text = "Invisibility",
     Default = false,
@@ -1376,15 +1379,13 @@ InfJumpGroup:AddToggle("Invis", {
                         end
                     end
                     if hum then
-                        local anim = Instance.new("Animation")
-                        anim.AnimationId = "rbxassetid://75804462760596"
                         local loadedAnim = hum:LoadAnimation(anim)
                         currentAnim = loadedAnim
                         loadedAnim.Looped = false
                         loadedAnim:Play()
                         loadedAnim:AdjustSpeed(0)
-                        if lastAnim and tick() - animDeleteTick > 1 then
-                            animDeleteTick = tick()
+                        task.wait(0.1)
+                        if lastAnim then
                             lastAnim:Stop()
                             lastAnim:Destroy()
                         end
