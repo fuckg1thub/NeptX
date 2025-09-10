@@ -244,6 +244,10 @@ local KillersESPGroup = Tabs.ESP:AddLeftGroupbox("Killers", "skull")
 local SurvivorsESPGroup = Tabs.ESP:AddRightGroupbox("Survivors", "user")
 local ItemsESPGroup = Tabs.ESP:AddRightGroupbox("Items", "shovel")
 
+local function generatorWait()
+    task.wait(Options.GeneratorDelay1.Value < Options.GeneratorDelay2.Value and math.random(Options.GeneratorDelay1.Value * 10, Options.GeneratorDelay2.Value * 10) / 10 or math.random(Options.GeneratorDelay2.Value * 10, Options.GeneratorDelay1.Value * 10) / 10)
+end
+
 GeneratorsESPGroup:AddToggle("GeneratorsESP", {
     Text = "Generators ESP",
     Default = false,
@@ -381,7 +385,7 @@ GeneratorsGroup:AddToggle("AutoCompleteGenerator", {
                                             "Finished puzzle " .. i,
                                             4
                                         )
-                                        task.wait(Options.GeneratorDelay1.Value < Options.GeneratorDelay2.Value and math.random(Options.GeneratorDelay1.Value, Options.GeneratorDelay2.Value) or math.random(Options.GeneratorDelay2.Value, Options.GeneratorDelay1.Value))
+                                        generatorWait()
                                     end
                                     activelyAutoing = false
                                     return ""
@@ -467,7 +471,7 @@ GeneratorsGroup:AddButton({
                                         4
                                     )
                                     v.Remotes.RE:FireServer()
-                                    task.wait(Options.GeneratorDelay1.Value < Options.GeneratorDelay2.Value and math.random(Options.GeneratorDelay1.Value, Options.GeneratorDelay2.Value) or math.random(Options.GeneratorDelay2.Value, Options.GeneratorDelay1.Value))
+                                    generatorWait()
                                 end
                             end
                         end
@@ -532,7 +536,7 @@ GeneratorsGroup:AddButton({
                                 4
                             )
                             v.Remotes.RE:FireServer()
-                            task.wait(Options.GeneratorDelay1.Value < Options.GeneratorDelay2.Value and math.random(Options.GeneratorDelay1.Value, Options.GeneratorDelay2.Value) or math.random(Options.GeneratorDelay2.Value, Options.GeneratorDelay1.Value))
+                            generatorWait()
                         end
                     end)
                 end
