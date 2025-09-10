@@ -615,7 +615,7 @@ KillersESPGroup:AddToggle("KillerESP", {
         _G.killers = bool
         task.spawn(function()
             while task.wait() do
-                if _G.killers == true then
+                if _G.killers == true and not isKiller then
                     if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers") then
                         for _, v in pairs(workspace.Players.Killers:GetChildren()) do
                             if not v:FindFirstChild("killer_esp") then
@@ -701,13 +701,15 @@ SurvivorsESPGroup:AddToggle("SurvivorESP", {
                 if _G.survivors == true then
                     if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors") then
                         for _, v in pairs(workspace.Players.Survivors:GetChildren()) do
-                            if not v:FindFirstChild("survivor_esp") then
-                                local hl = Instance.new("Highlight", v)
-                                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                                hl.Name = "survivor_esp"
-                            else    
-                                v.survivor_esp.FillColor = Options.SurvivorsESP.Value
-                                v.survivor_esp.OutlineTransparency = Toggles.SurvivorsESPOutline.Value and 0 or 1
+                            if v:GetAttribute("Username") ~= game.Players.LocalPlayer.Name then
+                                if not v:FindFirstChild("survivor_esp") then
+                                    local hl = Instance.new("Highlight", v)
+                                    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                                    hl.Name = "survivor_esp"
+                                else    
+                                    v.survivor_esp.FillColor = Options.SurvivorsESP.Value
+                                    v.survivor_esp.OutlineTransparency = Toggles.SurvivorsESPOutline.Value and 0 or 1
+                                end
                             end
                         end
                     end
@@ -742,19 +744,21 @@ SurvivorsESPGroup:AddToggle("SurvivorsNametags", {
                 if _G.survivorstag then
                     pcall(function()
                         for i, v in pairs(workspace.Players.Survivors:GetChildren()) do
-                            if not v:FindFirstChild("nametag") then
-                                local bb = Instance.new("BillboardGui", v)
-                                bb.Size = UDim2.new(4, 0, 1, 0)
-                                bb.AlwaysOnTop = true
-                                bb.Name = "nametag"
-                                local text = Instance.new("TextLabel", bb)
-                                text.TextStrokeTransparency = 0
-                                text.Text = "Survivor"
-                                text.TextSize = 15
-                                text.BackgroundTransparency = 1
-                                text.Size = UDim2.new(1, 0, 1, 0)
-                            elseif v:FindFirstChild("nametag") then
-                                v.nametag.TextLabel.TextColor3 = Options.SurvivorNametagColor.Value
+                            if v:GetAttribute("Username") ~= game.Players.LocalPlayer.Name then
+                                if not v:FindFirstChild("nametag") then
+                                    local bb = Instance.new("BillboardGui", v)
+                                    bb.Size = UDim2.new(4, 0, 1, 0)
+                                    bb.AlwaysOnTop = true
+                                    bb.Name = "nametag"
+                                    local text = Instance.new("TextLabel", bb)
+                                    text.TextStrokeTransparency = 0
+                                    text.Text = "Survivor"
+                                    text.TextSize = 15
+                                    text.BackgroundTransparency = 1
+                                    text.Size = UDim2.new(1, 0, 1, 0)
+                                elseif v:FindFirstChild("nametag") then
+                                    v.nametag.TextLabel.TextColor3 = Options.SurvivorNametagColor.Value
+                                end
                             end
                         end
                     end)
