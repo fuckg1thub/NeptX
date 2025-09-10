@@ -1,7 +1,7 @@
 -- NXP Hub forsaken source code, do not copy any of the code in here please, its my work and you dont have permission to use it.
 
 -- Added some extra features and fixed some bugs
--- Updated version to V2.1 (are we making improvements chat)
+-- Updated version to V2.2 (are we making improvements chat)
 
 local PathfindingService = game:GetService("PathfindingService")
 local Players = game:GetService("Players")
@@ -40,6 +40,16 @@ end
 
 local autoBlockAnimations = {"rbxassetid://94067586317868", "rbxassetid://107925328038675"} -- like basic slash animations ig
 local autoBlockVar
+local function hasAbility(name)
+    return game:GetService("Players").LocalPlayer.PlayerGui.MainUI:FindFirstChild("AbilityContainer")
+        and game:GetService("Players").LocalPlayer.PlayerGui.MainUI.AbilityContainer:FindFirstChild(name)
+end
+local function hasAbilityReady(name)
+    if not hasAbility(name) then
+        return false
+    end
+    return hasAbility(name).CooldownTime.Text == ""
+end
 local actor = game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent")
 if identifyexecutor() ~= "Xeno" and identifyexecutor() ~= "Solara" then
     local function trackAnimations(char)
@@ -50,7 +60,7 @@ if identifyexecutor() ~= "Xeno" and identifyexecutor() ~= "Solara" then
         if not animator then return end
 
         animator.AnimationPlayed:Connect(function(track)
-            if isSurvivor and autoBlockVar and table.find(autoBlockAnimations, track.Animation.AnimationId) then
+            if hasAbilityReady("Block") and isSurvivor and autoBlockVar and table.find(autoBlockAnimations, track.Animation.AnimationId) then
                 warn("fucking hitting")
                 if killerModel then
                     local suc, res = pcall(function()
@@ -143,7 +153,7 @@ Toggles = Library.Toggles or Toggles
 local Window
 if not _G.useLinoria then
     Window = Library:CreateWindow({
-        Title = "NXP hub V2.1",
+        Title = "NXP hub V2.2",
         Footer = "Forsaken",
         Icon = "rbxassetid://130931198530758",
         NotifySide = "Right",
@@ -245,19 +255,19 @@ GeneratorsESPGroup:AddToggle("GeneratorsESP", {
                     pcall(function()
                         if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
                             for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-                                if v.Name == "Generator" and not v:FindFirstChild("iskiddedfromneptz") then
+                                if v.Name == "Generator" and not v:FindFirstChild("gen_esp") then
                                     local hl = Instance.new("Highlight", v)
                                     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                                    hl.Name = "iskiddedfromneptz"
-                                elseif v:FindFirstChild("iskiddedfromneptz") and v.Name == "Generator" then
-                                    v.iskiddedfromneptz.OutlineTransparency = Toggles.GeneratorESPOutline.Value and 0 or 1
+                                    hl.Name = "gen_esp"
+                                elseif v:FindFirstChild("gen_esp") and v.Name == "Generator" then
+                                    v.gen_esp.OutlineTransparency = Toggles.GeneratorESPOutline.Value and 0 or 1
                                     if v:FindFirstChild("Progress") then
                                         if v.Progress.Value < 100 or not Toggles.GeneratorsESPGreen.Value then
-                                            v.iskiddedfromneptz.FillColor = Options.GeneratorsESPColor.Value
+                                            v.gen_esp.FillColor = Options.GeneratorsESPColor.Value
                                         end
                                     end
                                     if v:FindFirstChild("Progress") and v.Progress.Value >= 100 and Toggles.GeneratorsESPGreen.Value then
-                                        v.iskiddedfromneptz.FillColor = Color3.fromRGB(0, 255, 0)
+                                        v.gen_esp.FillColor = Color3.fromRGB(0, 255, 0)
                                     end
                                 end
                             end
@@ -267,8 +277,8 @@ GeneratorsESPGroup:AddToggle("GeneratorsESP", {
                     pcall(function()
                         if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
                             for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-                                if v.Name == "Generator" and v:FindFirstChild("iskiddedfromneptz") then
-                                    v.iskiddedfromneptz:Destroy()
+                                if v.Name == "Generator" and v:FindFirstChild("gen_esp") then
+                                    v.gen_esp:Destroy()
                                 end
                             end
                         end
@@ -309,7 +319,7 @@ GeneratorsESPGroup:AddToggle("GeneratorsNametags", {
                                     local text = Instance.new("TextLabel", bb)
                                     text.TextStrokeTransparency = 0
                                     text.Text = "Generator (" .. (v:FindFirstChild("Progress") and v.Progress.Value or 0) .. "%)"
-                                    text.TextSize = 20
+                                    text.TextSize = 15
                                     text.BackgroundTransparency = 1
                                     text.Size = UDim2.new(1, 0, 1, 0)
                                 elseif v:FindFirstChild("nametag") and v.Name == "Generator" then
@@ -608,22 +618,22 @@ KillersESPGroup:AddToggle("KillerESP", {
                 if _G.killers == true then
                     if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers") then
                         for _, v in pairs(workspace.Players.Killers:GetChildren()) do
-                            if not v:FindFirstChild("iskiddedfromneptz") then
+                            if not v:FindFirstChild("killer_esp") then
                                 local hl = Instance.new("Highlight", v)
                                 hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                                hl.Name = "iskiddedfromneptz"
+                                hl.Name = "killer_esp"
                                 hl.OutlineTransparency = 1
                             else
-                                v.iskiddedfromneptz.FillColor = Options.KillerESPColor.Value
-                                v.iskiddedfromneptz.OutlineTransparency = Toggles.KillerESPOutline.Value and 0 or 1
+                                v.killer_esp.FillColor = Options.KillerESPColor.Value
+                                v.killer_esp.OutlineTransparency = Toggles.KillerESPOutline.Value and 0 or 1
                             end
                         end
                     end
                 else
                     if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers") then
                         for _, v in pairs(workspace.Players.Killers:GetChildren()) do
-                            if v:FindFirstChild("iskiddedfromneptz") then
-                                v.iskiddedfromneptz:Destroy()
+                            if v:FindFirstChild("killer_esp") then
+                                v.killer_esp:Destroy()
                             end
                         end
                     end
@@ -658,7 +668,7 @@ KillersESPGroup:AddToggle("KillersNametags", {
                             local text = Instance.new("TextLabel", bb)
                             text.TextStrokeTransparency = 0
                             text.Text = "Killer"
-                            text.TextSize = 20
+                            text.TextSize = 15
                             text.BackgroundTransparency = 1
                             text.Size = UDim2.new(1, 0, 1, 0)
                         elseif v and v:FindFirstChild("nametag") then
@@ -691,21 +701,21 @@ SurvivorsESPGroup:AddToggle("SurvivorESP", {
                 if _G.survivors == true then
                     if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors") then
                         for _, v in pairs(workspace.Players.Survivors:GetChildren()) do
-                            if not v:FindFirstChild("iskiddedfromneptz") then
+                            if not v:FindFirstChild("survivor_esp") then
                                 local hl = Instance.new("Highlight", v)
                                 hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                                hl.Name = "iskiddedfromneptz"
+                                hl.Name = "survivor_esp"
                             else    
-                                v.iskiddedfromneptz.FillColor = Options.SurvivorsESP.Value
-                                v.iskiddedfromneptz.OutlineTransparency = Toggles.SurvivorsESPOutline.Value and 0 or 1
+                                v.survivor_esp.FillColor = Options.SurvivorsESP.Value
+                                v.survivor_esp.OutlineTransparency = Toggles.SurvivorsESPOutline.Value and 0 or 1
                             end
                         end
                     end
                 else
                     if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors") then
                         for _, v in pairs(workspace.Players.Survivors:GetChildren()) do
-                            if v:FindFirstChild("iskiddedfromneptz") then
-                                v.iskiddedfromneptz:Destroy()
+                            if v:FindFirstChild("survivor_esp") then
+                                v.survivor_esp:Destroy()
                             end
                         end
                     end
@@ -740,7 +750,7 @@ SurvivorsESPGroup:AddToggle("SurvivorsNametags", {
                                 local text = Instance.new("TextLabel", bb)
                                 text.TextStrokeTransparency = 0
                                 text.Text = "Survivor"
-                                text.TextSize = 20
+                                text.TextSize = 15
                                 text.BackgroundTransparency = 1
                                 text.Size = UDim2.new(1, 0, 1, 0)
                             elseif v:FindFirstChild("nametag") then
@@ -780,7 +790,7 @@ SurvivorsGroup:AddToggle("AutoCoinFlip", {
 })
 
 -- silent aim bruh
-local SilentAimGroup = Tabs.Main:AddRightGroupbox("Silent Aim", "swords")
+local SilentAimGroup = Tabs.Main:AddLeftGroupbox("Silent Aim", "swords")
 SilentAimGroup:AddToggle("DusekkarSilentAim", {
     Text = "Dusekkar Silent Aim",
 })
@@ -843,6 +853,76 @@ SurvivorsGroup:AddSlider("AutoBlockMS", {
     Rounding = 0
 })
 
+local function hasNotification(text)
+    for i, v in pairs(game:GetService("Players").LocalPlayer.PlayerGui.Notis:GetChildren()) do
+        if string.find(v.Text:lower(), text) then
+            return true
+        end
+    end
+end
+local function backstab(model)
+    if not model then
+        return
+    else
+        local stabbing = tick()
+        local oldCf = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+        repeat
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = model.HumanoidRootPart.CFrame - (model.HumanoidRootPart.CFrame.LookVector * 1)
+            game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "Dagger")
+            task.wait()
+        until (tick() - stabbing >= 3.5) or hasNotification("stab")
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = oldCf
+    end
+end
+local function backstabClose(model)
+    if not model then
+        return
+    else
+        if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - model.HumanoidRootPart.Position).magnitude <= Options.BackstabRange.Value then
+            backstab(model)
+        end
+    end
+end
+SurvivorsGroup:AddToggle("AutoDagger", {
+    Text = "Auto Backstab",
+    Default = false,
+    Callback = function(cool)
+        task.spawn(function()
+            while Toggles.AutoDagger.Value and task.wait(0.1) do
+                if hasAbilityReady("Dagger") and isSurvivor then
+                    local suc, res = pcall(backstab, killerModel)
+                    if not suc then
+                        warn("error when backstabbing:", res)
+                    end
+                end
+            end
+        end)
+    end
+})
+SurvivorsGroup:AddToggle("DaggerAura", {
+    Text = "Backstab Aura",
+    Default = false,
+    Callback = function(cool)
+        task.spawn(function()
+            while Toggles.DaggerAura.Value and task.wait(0.1) do
+                if hasAbilityReady("Dagger") and isSurvivor then
+                    local suc, res = pcall(backstabClose, killerModel)
+                    if not suc then
+                        warn("error when backstabbing near killer:", res)
+                    end
+                end
+            end
+        end)
+    end
+})
+SurvivorsGroup:AddSlider("BackstabRange", {
+    Text = "Backstab Aura Range",
+    Default = 20,
+    Min = 7,
+    Max = 99,
+    Rounding = 0
+})
+
 ItemsESPGroup:AddToggle("ItemsESP", {
     Text = "Items ESP",
     Default = false,
@@ -851,42 +931,53 @@ ItemsESPGroup:AddToggle("ItemsESP", {
         task.spawn(function()
             while task.wait() do
                 if _G.items == true then
-                    pcall(function()
+                    local suc, res = pcall(function()
                         if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
                             for _, v in pairs(workspace.Map.Ingame:GetChildren()) do
-                                if v:IsA("Tool") and not v:FindFirstChild("iskiddedfromneptz") then
+                                if v:IsA("Tool") and not v:FindFirstChild("tool_esp") then
                                     local hl = Instance.new("Highlight", v)
                                     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                                    hl.Name = "iskiddedfromneptz"
+                                    hl.Name = "tool_esp"
                                     hl.OutlineTransparency = 1
-                                elseif v:IsA("Tool") and v:FindFirstChild("iskiddedfromneptz") then
-                                    v.iskiddedfromneptz.FillColor = Options.ItemsESPColor.Value
-                                    v.iskiddedfromneptz.OutlineTransparency = Toggles.ItemsESPOutline.Value and 0 or 1
+                                elseif v:IsA("Tool") and v:FindFirstChild("tool_esp") then
+                                    v.tool_esp.FillColor = Options.ItemsESPColor.Value
+                                    v.tool_esp.OutlineTransparency = Toggles.ItemsESPOutline.Value and 0 or 1
                                 end
                             end
                             for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-                                if v:IsA("Tool") and not v:FindFirstChild("iskiddedfromneptz") then
+                                if v:IsA("Tool") and not v:FindFirstChild("tool_esp") then
                                     local hl = Instance.new("Highlight", v)
                                     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                                    hl.Name = "iskiddedfromneptz"
+                                    hl.Name = "tool_esp"
                                     hl.OutlineTransparency = 1
-                                elseif v:IsA("Tool") and v:FindFirstChild("iskiddedfromneptz") then
-                                    v.iskiddedfromneptz.FillColor = Options.ItemsESPColor.Value
-                                    v.iskiddedfromneptz.OutlineTransparency = Toggles.ItemsESPOutline.Value and 0 or 1
+                                elseif v:IsA("Tool") and v:FindFirstChild("tool_esp") then
+                                    v.tool_esp.FillColor = Options.ItemsESPColor.Value
+                                    v.tool_esp.OutlineTransparency = Toggles.ItemsESPOutline.Value and 0 or 1
                                 end
                             end
                         end
                     end)
+                    if not suc then
+                        warn("error when adding item esp:", res)
+                    end
                 else
-                    pcall(function()
-                        if workspace:FindChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
+                    local suc, res = pcall(function()
+                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
+                            for _, v in pairs(workspace.Map.Ingame:GetChildren()) do
+                                if v:IsA("Tool") and v:FindFirstChild("tool_esp") then
+                                    v.tool_esp:Destroy()
+                                end
+                            end
                             for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-                                if v:IsA("Tool") and v:FindFirstChild("iskiddedfromneptz") then
-                                    v.iskiddedfromneptz:Destroy()
+                                if v:IsA("Tool") and v:FindFirstChild("tool_esp") then
+                                    v.tool_esp:Destroy()
                                 end
                             end
                         end
                     end)
+                    if not suc then
+                        warn("error when removing item esp:", res)
+                    end
                     break
                 end
             end
@@ -898,6 +989,56 @@ ItemsESPGroup:AddToggle("ItemsESP", {
 })
 ItemsESPGroup:AddToggle("ItemsESPOutline", {
     Text = "Show Outline",
+})
+
+ItemsESPGroup:AddToggle("ItemsNametags", {
+    Text = "Items Nametag",
+    Default = false,
+    Callback = function(bool)
+        _G.killertag = bool
+        task.spawn(function()
+            while task.wait() do
+                if _G.killertag then
+                    pcall(function()
+                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
+                            for _, v in pairs(workspace.Map.Ingame:GetChildren()) do
+                                if v:IsA("Tool") then
+                                    if not v:FindFirstChild("tool_nametag") then
+                                        local bb = Instance.new("BillboardGui", v)
+                                        bb.Size = UDim2.new(4, 0, 1, 0)
+                                        bb.AlwaysOnTop = true
+                                        bb.Name = "tool_nametag"
+                                        local text = Instance.new("TextLabel", bb)
+                                        text.TextStrokeTransparency = 0
+                                        text.Text = (v.Name == "BloxyCola" and "Bloxy Cola") or v.Name
+                                        text.TextSize = 15
+                                        text.BackgroundTransparency = 1
+                                        text.Size = UDim2.new(1, 0, 1, 0)
+                                    elseif v:FindFirstChild("tool_nametag") then
+                                        v.tool_nametag.TextLabel.TextColor3 = Options.itemNametagColor.Value
+                                    end
+                                end
+                            end
+                        end
+                    end)
+                else
+                    pcall(function()
+                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
+                            for _, v in pairs(workspace.Map.Ingame:GetChildren()) do
+                                if v:IsA("Tool") and v:FindFirstChild("tool_nametag") then
+                                    v.tool_nametag:Destroy()
+                                end
+                            end
+                        end
+                    end)
+                    break
+                end
+            end
+        end)
+    end
+}):AddColorPicker("itemNametagColor", {
+    Default = Color3.fromRGB(255, 255, 255),
+    Title = "Color",
 })
 
 ItemsGroup:AddToggle("AutoPickUpNearItems", {
