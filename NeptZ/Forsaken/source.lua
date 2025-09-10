@@ -760,8 +760,11 @@ SurvivorsGroup:AddToggle("AutoCoinFlip", {
 SurvivorsGroup:AddToggle("AutoBlock", {
     Text = "Auto Block",
     Default = false,
-    Callback = function (cool)
-       autoBlockVar = cool
+    Callback = function(cool)
+        autoBlockVar = cool
+        if autoBlockVar then
+            Notify("beware", "this feature is very beta IDK in what cases it works LOL", 7)
+        end
     end
 })
 SurvivorsGroup:AddSlider("AutoBlockMS", {
