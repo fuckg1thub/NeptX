@@ -1,10 +1,24 @@
--- NXP Hub forsaken source code, do not copy any of the code in here please, its my work and you dont have permission to use it.
+--[[
+    READ BEFORE GETTING ANY IDEAS!
+      >>>>> Do not copy any of the code in here please!
+      **its my work and you dont have permission to use it**
+]]
 
 -- Added some extra features and fixed some bugs
 -- Updated version to V2.2 (are we making improvements chat)
 
+local function debugCall(suc, res)
+    if (not suc) and (res ~= nil) then
+        warn("[DEBUG] " .. res)
+    end
+end
+
 local PathfindingService = game:GetService("PathfindingService")
 local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local Network = replicatedStorage:WaitForChild("Modules"):WaitForChild("Network")
+local gameMap = workspace.Map
 
 local h = 0
 local function pathfindTo(targetPos)
@@ -12,9 +26,11 @@ local function pathfindTo(targetPos)
     local plr = Players.LocalPlayer
     local char = plr.Character
     if not char then return end
+
     local hum = char:FindFirstChild("Humanoid")
     local root = char:FindFirstChild("HumanoidRootPart")
     if (not char) or (not hum) then return end
+
     local path = PathfindingService:CreatePath({
         AgentRadius = 2,
         AgentHeight = 5,
@@ -40,17 +56,21 @@ end
 
 local autoBlockAnimations = {"rbxassetid://94067586317868", "rbxassetid://107925328038675"} -- like basic slash animations ig
 local autoBlockVar
+
 local function hasAbility(name)
-    return game:GetService("Players").LocalPlayer.PlayerGui.MainUI:FindFirstChild("AbilityContainer")
-        and game:GetService("Players").LocalPlayer.PlayerGui.MainUI.AbilityContainer:FindFirstChild(name)
+    return localPlayer.PlayerGui.MainUI:FindFirstChild("AbilityContainer")
+        and localPlayer.PlayerGui.MainUI.AbilityContainer:FindFirstChild(name)
 end
+
 local function hasAbilityReady(name)
     if not hasAbility(name) then
         return false
     end
     return hasAbility(name).CooldownTime.Text == ""
 end
-local actor = game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent")
+
+local actor = Network:WaitForChild("RemoteEvent")
+
 if identifyexecutor() ~= "Xeno" and identifyexecutor() ~= "Solara" then
     local function trackAnimations(char)
         local humanoid = char:WaitForChild("Humanoid", 5)
@@ -61,13 +81,14 @@ if identifyexecutor() ~= "Xeno" and identifyexecutor() ~= "Solara" then
 
         animator.AnimationPlayed:Connect(function(track)
             if hasAbilityReady("Block") and isSurvivor and autoBlockVar and table.find(autoBlockAnimations, track.Animation.AnimationId) then
-                warn("fucking hitting")
                 if killerModel then
                     local suc, res = pcall(function()
-                        if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - killerModel.HumanoidRootPart.Position).magnitude <= 13 then
+                        if (localPlayer.Character.HumanoidRootPart.Position - killerModel.HumanoidRootPart.Position).magnitude <= 13 then
                             _G._Notify("Blocking", "Hit detected, trying to block", 5)
+
                             task.wait(Options.AutoBlockMS.Value / 1000)
                             actor.FireServer(actor, "UseActorAbility", "Block")
+
                             _G._Notify("Blocked", "Hit blocked, you might've still taken damage though", 5)
                         end
                     end)
@@ -85,48 +106,50 @@ if identifyexecutor() ~= "Xeno" and identifyexecutor() ~= "Solara" then
     end
 
     local killers = game:GetService("ReplicatedStorage").Assets.Killers
+
     local function getanims(name)
         return killers:FindFirstChild(name) and require(killers[name].Config).Animations
     end
+    
     local jason = getanims("Slasher")
     if jason then
         table.insert(autoBlockAnimations, jason.Slash)
         table.insert(autoBlockAnimations, jason.Behead)
         table.insert(autoBlockAnimations, jason.GashingWoundStart)
     end
+
     local mathguy = getanims("1x1x1x1")
     if mathguy then
         table.insert(autoBlockAnimations, mathguy.Slash)
         table.insert(autoBlockAnimations, mathguy.MassInfection)
         table.insert(autoBlockAnimations, mathguy.Entanglement)
     end
+
     local johndoe = getanims("JohnDoe")
     if johndoe then
         table.insert(autoBlockAnimations, johndoe.Slash)
     end
+
     local noli = getanims("Noli")
     if noli then
         table.insert(autoBlockAnimations, noli.Stab)
         table.insert(autoBlockAnimations, noli.VoidRush.StartDashInit)
     end
+
     local coolkid = getanims("c00lkidd")
     if coolkid then
         table.insert(autoBlockAnimations, coolkid.Attack)
         table.insert(autoBlockAnimations, coolkid.WalkspeedOverrideStart)
     end
 else
-    if _G.useLinoria then
-        Library:Notify("Your executor is bad! Please dont expect many features to run properly", 6)
-    else
-        Library:Notify({
-            Title = "Bad executor",
-            Description = "Your executor is bad! Please dont expect many features to run properly",
-            Time = 6,
-        })
-    end
+    Library:Notify({
+        Title = "Bad executor",
+        Description = "Your executor is bad! Please dont expect many features to run properly",
+        Time = 6,
+    })
 end
 
-local repo = _G.useLinoria and "https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/" or "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
+local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
 Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
@@ -142,6 +165,7 @@ local function Notify(Title, Text, Duration)
         })
     end
 end
+
 _G._Notify = Notify
 
 Options = Library.Options or Options
@@ -172,16 +196,19 @@ local Tabs = {
 task.spawn(function()
     while task.wait() do
         local _isKiller = false
+
         if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers") then
             for _, v in pairs(workspace.Players.Killers:GetChildren()) do
                 if v:GetAttribute("Username") and game.Players:FindFirstChild(v:GetAttribute("Username")) then
                     killerModel = v
                 end
-                if v:GetAttribute("Username") == game.Players.LocalPlayer.Name then
+
+                if v:GetAttribute("Username") == localPlayer.Name then
                     killerModel = v
                     _isKiller = true
                 end
             end
+
             isSurvivor = not _isKiller
             isKiller = _isKiller
         end
@@ -192,12 +219,14 @@ local function getClosestSurvivorToMouse(x, y)
     local closestDistance = math.huge
     local closestSurvivor = nil
     local cam = workspace.CurrentCamera
+
     if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors") then
         for _, v in pairs(workspace.Players.Survivors:GetChildren()) do
-            if v:GetAttribute("Username") ~= game.Players.LocalPlayer.Name then
+            if v:GetAttribute("Username") ~= localPlayer.Name then
                 if v:FindFirstChild("HumanoidRootPart")then
                     local nihpos = v.HumanoidRootPart.Position
                     local vector, onScreen = cam:WorldToViewportPoint(nihpos)
+
                     if onScreen then
                         local mag = (Vector2.new(x, y) - Vector2.new(vector.X, vector.Y)).Magnitude
                         if mag < closestDistance then
@@ -224,10 +253,11 @@ local SurvivorsGroup = Tabs.Main:AddRightGroupbox("Survivors", "user")
 local ItemsGroup = Tabs.Main:AddLeftGroupbox("Items", "shovel")
 local AimbotGroup = Tabs.Main:AddRightGroupbox("Aimbot", "mouse")
 
-local GeneratorsESPGroup = Tabs.ESP:AddLeftGroupbox("Generators", "battery-charging")
-local KillersESPGroup = Tabs.ESP:AddLeftGroupbox("Killers", "skull")
-local SurvivorsESPGroup = Tabs.ESP:AddRightGroupbox("Survivors", "user")
-local ItemsESPGroup = Tabs.ESP:AddRightGroupbox("Items", "shovel")
+local GeneratorsESPGroup = Tabs.ESP:AddLeftGroupbox("Generators ESP", "battery-charging")
+local KillersESPGroup = Tabs.ESP:AddLeftGroupbox("Killers ESP", "skull")
+local SurvivorsESPGroup = Tabs.ESP:AddRightGroupbox("Survivors ESP", "user")
+local ItemsESPGroup = Tabs.ESP:AddRightGroupbox("Items ESP", "shovel")
+local MiscESPGroup = Tabs.ESP:AddRightGroupbox("Misc ESP", "chart-no-axes-gantt")
 
 local function generatorWait()
     task.wait(Options.GeneratorDelay1.Value < Options.GeneratorDelay2.Value and math.random(Options.GeneratorDelay1.Value * 10, Options.GeneratorDelay2.Value * 10) / 10 or math.random(Options.GeneratorDelay2.Value * 10, Options.GeneratorDelay1.Value * 10) / 10)
@@ -238,23 +268,25 @@ GeneratorsESPGroup:AddToggle("GeneratorsESP", {
     Default = false,
     Callback = function(bool)
         _G.generators = bool
+
         task.spawn(function()
             while task.wait() do
                 if _G.generators then
                     pcall(function()
-                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
-                            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+                        if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") and gameMap.Ingame:FindFirstChild("Map") then
+                            for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                                 if v.Name == "Generator" and not v:FindFirstChild("gen_esp") then
                                     local hl = Instance.new("Highlight", v)
                                     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                                     hl.Name = "gen_esp"
+                                    hl.OutlineTransparency = 1
                                 elseif v:FindFirstChild("gen_esp") and v.Name == "Generator" then
-                                    v.gen_esp.OutlineTransparency = Toggles.GeneratorESPOutline.Value and 0 or 1
                                     if v:FindFirstChild("Progress") then
                                         if v.Progress.Value < 100 or not Toggles.GeneratorsESPGreen.Value then
                                             v.gen_esp.FillColor = Options.GeneratorsESPColor.Value
                                         end
                                     end
+
                                     if v:FindFirstChild("Progress") and v.Progress.Value >= 100 and Toggles.GeneratorsESPGreen.Value then
                                         v.gen_esp.FillColor = Color3.fromRGB(0, 255, 0)
                                     end
@@ -264,8 +296,8 @@ GeneratorsESPGroup:AddToggle("GeneratorsESP", {
                     end)
                 else
                     pcall(function()
-                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
-                            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+                        if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") and gameMap.Ingame:FindFirstChild("Map") then
+                            for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                                 if v.Name == "Generator" and v:FindFirstChild("gen_esp") then
                                     v.gen_esp:Destroy()
                                 end
@@ -281,9 +313,6 @@ GeneratorsESPGroup:AddToggle("GeneratorsESP", {
     Default = Color3.fromRGB(255, 255, 51),
     Title = "Generator Color",
 })
-GeneratorsESPGroup:AddToggle("GeneratorESPOutline", {
-    Text = "Show Outline",
-})
 
 GeneratorsESPGroup:AddToggle("GeneratorsESPGreen", {
     Text = "Show Green When Done",
@@ -294,17 +323,19 @@ GeneratorsESPGroup:AddToggle("GeneratorsNametags", {
     Default = false,
     Callback = function(bool)
         _G.generatorstag = bool
+
         task.spawn(function()
             while task.wait() do
                 if _G.generatorstag then
                     pcall(function()
-                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
-                            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+                        if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") and gameMap.Ingame:FindFirstChild("Map") then
+                            for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                                 if v.Name == "Generator" and not v:FindFirstChild("nametag") then
                                     local bb = Instance.new("BillboardGui", v)
                                     bb.Size = UDim2.new(4, 0, 1, 0)
                                     bb.AlwaysOnTop = true
                                     bb.Name = "nametag"
+
                                     local text = Instance.new("TextLabel", bb)
                                     text.TextStrokeTransparency = 0
                                     text.Text = "Generator (" .. (v:FindFirstChild("Progress") and v.Progress.Value or 0) .. "%)"
@@ -313,6 +344,7 @@ GeneratorsESPGroup:AddToggle("GeneratorsNametags", {
                                     text.Size = UDim2.new(1, 0, 1, 0)
                                 elseif v:FindFirstChild("nametag") and v.Name == "Generator" then
                                     v.nametag.TextLabel.TextColor3 = Options.GeneratorsNametagsColor.Value
+
                                     if v:FindFirstChild("Progress") then
                                         v.nametag.TextLabel.Text = "Generator (" .. v.Progress.Value .. "%)"
                                     end
@@ -322,8 +354,8 @@ GeneratorsESPGroup:AddToggle("GeneratorsNametags", {
                     end)
                 else
                     pcall(function()
-                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
-                            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+                        if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") and gameMap.Ingame:FindFirstChild("Map") then
+                            for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                                 if v.Name == "Generator" and v:FindFirstChild("nametag") then
                                     v.nametag:Destroy()
                                 end
@@ -342,40 +374,76 @@ GeneratorsESPGroup:AddToggle("GeneratorsNametags", {
 
 local generatorsDid = {}
 local activelyAutoing = false
+local tbl = {
+    tooFar = "Move a bit closer to an available side of the generator and try again.";
+    positionOccupied = "Move to another side of the generator and try again.";
+    tooMany = "Too many people are fixing the generator right now. Try again later.";
+    alreadyFixed = "This generator's already been fixed. Go try fixing another one.";
+    dead = "Try not to die next time.";
+    isKiller = "You're supposed to be killing them, not helping them. Go do that.";
+    isUnknownTeam = "Dude what r u doing rn you're a spectator";
+    leftAlready = "";
+}
 GeneratorsGroup:AddToggle("AutoCompleteGenerator", {
     Text = "Auto Complete Generator",
     Default = false,
     Callback = function(bool)
         _G.instantGenerator = bool
+
         task.spawn(function()
             while _G.instantGenerator and task.wait() do
-                if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
-                    local suc, res = pcall(function()
-                        for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
-                            if not generatorsDid[v] and v.Name == "Generator" and v:FindFirstChild("Scripts") and v.Scripts:FindFirstChild("Client") then
-                                generatorsDid[v] = true
-                                local old; old = hookfunction(getsenv(v.Scripts.Client).toggleGeneratorState, newcclosure(function(a)
-                                    if checkcaller() then return old(a) end
-                                    if not _G.instantGenerator then return old(a) end
-                                    if a ~= "enter" then return old("leave") end
-                                    local ou = v.Remotes.RF:InvokeServer("enter")
-                                    if ou ~= "fixing" then return end
-                                    activelyAutoing = true
-                                    for i = 1, 4 do
-                                        if v.Progress.Value >= 100 then break end
-                                        v.Remotes.RE:FireServer()
-                                        setthreadidentity(8)
-                                        Notify(
-                                            "Generator Step",
-                                            "Finished puzzle " .. i,
-                                            4
-                                        )
-                                        generatorWait()
-                                    end
-                                    activelyAutoing = false
-                                    return ""
-                                end))
-                            end
+                if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") and gameMap.Ingame:FindFirstChild("Map") then
+                    pcall(function()
+                        for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
+                            debugCall(pcall(function()
+                                if not generatorsDid[v] and v.Name == "Generator" and v:FindFirstChild("Scripts") and v.Scripts:FindFirstChild("Client") then
+                                    if not getsenv(v.Scripts.Client).toggleGeneratorState then return end
+                                    generatorsDid[v] = true
+                                    local old; old = hookfunction(getsenv(v.Scripts.Client).toggleGeneratorState, newcclosure(function(a)
+                                        if checkcaller() then
+                                            return old(a)
+                                        end
+
+                                        if not _G.instantGenerator then
+                                            return old(a) 
+                                        end
+
+                                        if a ~= "enter" then 
+                                            activelyAutoing = false
+                                            return old("leave")
+                                        end
+
+                                        if Toggles.ShowPuzzleInAuto.Value then
+                                            old("enter")
+
+                                            for i, v in pairs(tbl) do
+                                                if hasNotification(v) then
+                                                    return
+                                                end
+                                            end
+                                        else
+                                            local result = v.Remotes.RF:InvokeServer("enter")
+
+                                            if result ~= "fixing" then
+                                                return
+                                            end
+                                        end
+
+                                        activelyAutoing = true
+
+                                        for i = 1, 4 do
+                                            if v.Progress.Value >= 100 then break end
+                                            v.Remotes.RE:FireServer()
+                                            setthreadidentity(8)
+                                            Notify("Generator Step", "Finished puzzle " .. i, 4)
+                                            generatorWait()
+                                        end
+
+                                        activelyAutoing = false
+                                        return ""
+                                    end))
+                                end
+                            end))
                         end
                     end)
                 end
@@ -391,25 +459,28 @@ GeneratorsGroup:AddToggle("AutoStartGenerator", {
         _G.autoGen = bool
         task.spawn(function()
             while _G.autoGen and task.wait() do
-                if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
-                    local suc, res = pcall(function()
-                        for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+                if gameMap:FindFirstChild("Ingame") and gameMap.Ingame:FindFirstChild("Map") then
+                    pcall(function()
+                        for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                             if v.Name == "Generator" then
-                                pcall(function ()
+                                pcall(function()
                                     local function continue()
-                                        if game.Players.LocalPlayer.PlayerGui:FindFirstChild("PuzzleUI") then return end
+                                        if localPlayer.PlayerGui:FindFirstChild("PuzzleUI") then return end
                                         if activelyAutoing then return end
+
                                         if v.Main:FindFirstChild("Prompt") then
                                             fireproximityprompt(v.Main.Prompt)
                                         end
                                         task.wait(1)
                                     end
+
                                     local hello = v.Positions.Center.Position
                                     local hello2 = v.Positions.Right.Position
                                     local hello3 = v.Positions.Left.Position
-                                    local lp = game.Players.LocalPlayer
-                                    if not lp.Character or not lp.Character:FindFirstChild("HumanoidRootPart") then return end
-                                    local pos = lp.Character.HumanoidRootPart.Position
+
+                                    if not localPlayer.Character or not localPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+
+                                    local pos = localPlayer.Character.HumanoidRootPart.Position
                                     if (pos - hello).Magnitude <= 4 then
                                         continue()
                                     elseif (pos - hello2).Magnitude <= 4 then
@@ -431,24 +502,22 @@ GeneratorsGroup:AddButton({
     Text = "Complete Active Generator",
     Func = function()
         if activelyAutoing then return end
-        local suc, res = pcall(function()
-            if not (workspace.Map and workspace.Map.Ingame and workspace.Map.Ingame.Map) then return end
-            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+        pcall(function()
+            if not (gameMap and gameMap.Ingame and gameMap.Ingame.Map) then return end
+            for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                 if v.Name == "Generator" then
                     pcall(function ()
-                        if game.Players.LocalPlayer.PlayerGui:FindFirstChild("PuzzleUI") then
+                        if localPlayer.PlayerGui:FindFirstChild("PuzzleUI") then
                             local hello = v.Positions.Center.Position
-                            if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - hello).Magnitude <= 21 then
+                            if (localPlayer.Character.HumanoidRootPart.Position - hello).Magnitude <= 21 then
                                 for i = 1, 4 do
                                     if v.Progress.Value >= 100 then break end
+
                                     if activelyAutoing then return end
-                                    if not game.Players.LocalPlayer.PlayerGui:FindFirstChild("PuzzleUI") then break end
+                                    if not localPlayer.PlayerGui:FindFirstChild("PuzzleUI") then break end
+
                                     setthreadidentity(8)
-                                    Notify(
-                                        "Generator Step",
-                                        "Finished puzzle " .. i,
-                                        4
-                                    )
+                                    Notify("Generator Step", "Finished puzzle " .. i, 4 )
                                     v.Remotes.RE:FireServer()
                                     generatorWait()
                                 end
@@ -467,57 +536,75 @@ GeneratorsGroup:AddButton({
         if playingState == "Spectating" then
             return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
         end
+
         if activelyAutoing then return end
-        local suc, res = pcall(function()
-            if not (workspace.Map and workspace.Map.Ingame and workspace.Map.Ingame.Map) then return end
-            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+
+        debugCall(pcall(function()
+            if not (gameMap and gameMap.Ingame and gameMap.Ingame.Map) then return end
+
+            for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                 if v.Name == "Generator" then
-                    pcall(function ()
+                    debugCall(pcall(function()
                         if v.Progress.Value >= 100 then return end
+
                         local function checkOccupance(pos)
                             if not (workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors")) then print("yeah 1") return false end
                             for _, sv in pairs(workspace.Players.Survivors:GetChildren()) do
                                 if sv:FindFirstChild("HumanoidRootPart") then
-                                    if sv ~= game.Players.LocalPlayer then
+                                    if sv ~= localPlayer then
                                         if (sv.HumanoidRootPart.Position - pos).Magnitude <= 6 then
                                             return true
                                         end
                                     end
                                 end
                             end
+
                             return false
                         end
                         local centerOccupied, rightOccupied, leftOccupied =
                             checkOccupance(v.Positions.Center.Position),
                             checkOccupance(v.Positions.Right.Position),
                             checkOccupance(v.Positions.Left.Position)
-                            print(centerOccupied, rightOccupied, leftOccupied)
+                            
                         if centerOccupied and rightOccupied and leftOccupied then return print("occuhpied")end
                         if not centerOccupied then
-                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.Positions.Center.CFrame
+                            localPlayer.Character.HumanoidRootPart.CFrame = v.Positions.Center.CFrame
                         elseif not rightOccupied then
-                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.Positions.Right.CFrame
+                            localPlayer.Character.HumanoidRootPart.CFrame = v.Positions.Right.CFrame
                         else
-                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.Positions.Left.CFrame
+                            localPlayer.Character.HumanoidRootPart.CFrame = v.Positions.Left.CFrame
                         end
+
                         task.wait(0.2)
-                        v.Remotes.RF:InvokeServer("enter")
+                        
+                        if Toggles.ShowPuzzleInAuto.Value then
+                            getsenv(v.Scripts.Client).toggleGeneratorState("enter")
+
+                            for i, v in pairs(tbl) do
+                                if hasNotification(v) then
+                                    return
+                                end
+                            end
+                        else
+                            local result = v.Remotes.RF:InvokeServer("enter")
+
+                            if result ~= "fixing" then
+                                return
+                            end
+                        end
+
                         for j = 1, 4 do
-                            if v.Progress.Value >= 100 then print("break") break end
-                            if activelyAutoing then return print("activelyAutoing") end
+                            if v.Progress.Value >= 100 then break end
+                            if activelyAutoing then return end
                             setthreadidentity(8)
-                            Notify(
-                                "Generator Step",
-                                "Finished puzzle " .. tostring(j),
-                                4
-                            )
+                            Notify("Generator Step", "Finished puzzle " .. tostring(j), 4)
                             v.Remotes.RE:FireServer()
                             generatorWait()
                         end
-                    end)
+                    end))
                 end
             end
-        end)
+        end))
     end
 })
 
@@ -535,6 +622,11 @@ GeneratorsGroup:AddSlider("GeneratorDelay2", {
     Min = 1.2,
     Max = 16,
     Rounding = 1,
+})
+
+GeneratorsGroup:AddToggle("ShowPuzzleInAuto", {
+    Text = "Show Puzzle UI When Auto",
+    Default = true
 })
 
 local aimbotHeld = false
@@ -562,7 +654,7 @@ AimbotGroup:AddToggle("Aimbot", {
                 if aimbotHeld then
                     local cam = workspace.CurrentCamera
                     if isKiller then
-                        local mouse = game.Players.LocalPlayer:GetMouse()
+                        local mouse = localPlayer:GetMouse()
                         local x, y = mouse.X, mouse.Y
                         local v = getClosestSurvivorToMouse(x, y)
                         if v then
@@ -609,7 +701,6 @@ KillersESPGroup:AddToggle("KillerESP", {
                                 hl.OutlineTransparency = 1
                             else
                                 v.killer_esp.FillColor = Options.KillerESPColor.Value
-                                v.killer_esp.OutlineTransparency = Toggles.KillerESPOutline.Value and 0 or 1
                             end
                         end
                     end
@@ -629,9 +720,6 @@ KillersESPGroup:AddToggle("KillerESP", {
 }):AddColorPicker("KillerESPColor", {
     Default = Color3.fromRGB(255, 0, 0),
     Title = "Killer Color",
-})
-KillersESPGroup:AddToggle("KillerESPOutline", {
-    Text = "Show Outline",
 })
 
 KillersESPGroup:AddToggle("KillersNametags", {
@@ -685,14 +773,14 @@ SurvivorsESPGroup:AddToggle("SurvivorESP", {
                 if _G.survivors == true then
                     if workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors") then
                         for _, v in pairs(workspace.Players.Survivors:GetChildren()) do
-                            if v:GetAttribute("Username") ~= game.Players.LocalPlayer.Name then
+                            if v:GetAttribute("Username") ~= localPlayer.Name then
                                 if not v:FindFirstChild("survivor_esp") then
                                     local hl = Instance.new("Highlight", v)
                                     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                                     hl.Name = "survivor_esp"
+                                    hl.OutlineTransparency = 1
                                 else    
                                     v.survivor_esp.FillColor = Options.SurvivorsESP.Value
-                                    v.survivor_esp.OutlineTransparency = Toggles.SurvivorsESPOutline.Value and 0 or 1
                                 end
                             end
                         end
@@ -714,9 +802,6 @@ SurvivorsESPGroup:AddToggle("SurvivorESP", {
     Default = Color3.fromRGB(0, 0, 255),
     Title = "Survivor Color",
 })
-SurvivorsESPGroup:AddToggle("SurvivorsESPOutline", {
-    Text = "Show Outline",
-})
 
 SurvivorsESPGroup:AddToggle("SurvivorsNametags", {
     Text = "Survivors Nametag",
@@ -728,7 +813,7 @@ SurvivorsESPGroup:AddToggle("SurvivorsNametags", {
                 if _G.survivorstag then
                     pcall(function()
                         for i, v in pairs(workspace.Players.Survivors:GetChildren()) do
-                            if v:GetAttribute("Username") ~= game.Players.LocalPlayer.Name then
+                            if v:GetAttribute("Username") ~= localPlayer.Name then
                                 if not v:FindFirstChild("nametag") then
                                     local bb = Instance.new("BillboardGui", v)
                                     bb.Size = UDim2.new(4, 0, 1, 0)
@@ -771,7 +856,7 @@ SurvivorsGroup:AddToggle("AutoCoinFlip", {
         _G.coin = cool
         task.spawn(function ()
             while _G.coin and task.wait(2.1) do
-                game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "CoinFlip")
+                Network:WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "CoinFlip")
             end
         end)
     end
@@ -841,8 +926,8 @@ SurvivorsGroup:AddSlider("AutoBlockMS", {
     Rounding = 0
 })
 
-local function hasNotification(text)
-    for i, v in pairs(game:GetService("Players").LocalPlayer.PlayerGui.Notis:GetChildren()) do
+function hasNotification(text)
+    for i, v in pairs(localPlayer.PlayerGui.Notis:GetChildren()) do
         if string.find(v.Text:lower(), text) then
             return true
         end
@@ -853,24 +938,24 @@ local function backstab(model)
         return
     else
         local stabbing = tick()
-        local oldCf = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+        local oldCf = localPlayer.Character.HumanoidRootPart.CFrame
         task.spawn(function()
             task.wait(0.2)
-            game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "Dagger")
+            Network:WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "Dagger")
         end)
         repeat
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = model.HumanoidRootPart.CFrame - (model.HumanoidRootPart.CFrame.LookVector * 1)
+            localPlayer.Character.HumanoidRootPart.CFrame = model.HumanoidRootPart.CFrame - (model.HumanoidRootPart.CFrame.LookVector * 1)
             task.wait()
         until (tick() - stabbing >= 3.5) or hasNotification("stab")
         task.wait(0.5)
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = oldCf
+        localPlayer.Character.HumanoidRootPart.CFrame = oldCf
     end
 end
 local function backstabClose(model)
     if not model then
         return
     else
-        if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - model.HumanoidRootPart.Position).magnitude <= Options.BackstabRange.Value then
+        if (localPlayer.Character.HumanoidRootPart.Position - model.HumanoidRootPart.Position).magnitude <= Options.BackstabRange.Value then
             backstab(model)
         end
     end
@@ -924,8 +1009,8 @@ ItemsESPGroup:AddToggle("ItemsESP", {
             while task.wait() do
                 if _G.items == true then
                     local suc, res = pcall(function()
-                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
-                            for _, v in pairs(workspace.Map.Ingame:GetChildren()) do
+                        if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") then
+                            for _, v in pairs(gameMap.Ingame:GetChildren()) do
                                 if v:IsA("Tool") and not v:FindFirstChild("tool_esp") then
                                     local hl = Instance.new("Highlight", v)
                                     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
@@ -933,10 +1018,9 @@ ItemsESPGroup:AddToggle("ItemsESP", {
                                     hl.OutlineTransparency = 1
                                 elseif v:IsA("Tool") and v:FindFirstChild("tool_esp") then
                                     v.tool_esp.FillColor = Options.ItemsESPColor.Value
-                                    v.tool_esp.OutlineTransparency = Toggles.ItemsESPOutline.Value and 0 or 1
                                 end
                             end
-                            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+                            for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                                 if v:IsA("Tool") and not v:FindFirstChild("tool_esp") then
                                     local hl = Instance.new("Highlight", v)
                                     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
@@ -944,20 +1028,19 @@ ItemsESPGroup:AddToggle("ItemsESP", {
                                     hl.OutlineTransparency = 1
                                 elseif v:IsA("Tool") and v:FindFirstChild("tool_esp") then
                                     v.tool_esp.FillColor = Options.ItemsESPColor.Value
-                                    v.tool_esp.OutlineTransparency = Toggles.ItemsESPOutline.Value and 0 or 1
                                 end
                             end
                         end
                     end)
                 else
                     local suc, res = pcall(function()
-                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
-                            for _, v in pairs(workspace.Map.Ingame:GetChildren()) do
+                        if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") and gameMap.Ingame:FindFirstChild("Map") then
+                            for _, v in pairs(gameMap.Ingame:GetChildren()) do
                                 if v:IsA("Tool") and v:FindFirstChild("tool_esp") then
                                     v.tool_esp:Destroy()
                                 end
                             end
-                            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+                            for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                                 if v:IsA("Tool") and v:FindFirstChild("tool_esp") then
                                     v.tool_esp:Destroy()
                                 end
@@ -976,9 +1059,6 @@ ItemsESPGroup:AddToggle("ItemsESP", {
     Default = Color3.fromRGB(0, 255, 255),
     Title = "Item Color",
 })
-ItemsESPGroup:AddToggle("ItemsESPOutline", {
-    Text = "Show Outline",
-})
 
 ItemsESPGroup:AddToggle("ItemsNametags", {
     Text = "Items Nametag",
@@ -989,8 +1069,8 @@ ItemsESPGroup:AddToggle("ItemsNametags", {
             while task.wait() do
                 if _G.killertag then
                     pcall(function()
-                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
-                            for _, v in pairs(workspace.Map.Ingame:GetChildren()) do
+                        if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") then
+                            for _, v in pairs(gameMap.Ingame:GetChildren()) do
                                 if v:IsA("Tool") then
                                     if not v:FindFirstChild("tool_nametag") then
                                         local bb = Instance.new("BillboardGui", v)
@@ -1008,7 +1088,7 @@ ItemsESPGroup:AddToggle("ItemsNametags", {
                                     end
                                 end
                             end
-                            for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+                            for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                                 if v:IsA("Tool") then
                                     if not v:FindFirstChild("tool_nametag") then
                                         local bb = Instance.new("BillboardGui", v)
@@ -1030,8 +1110,8 @@ ItemsESPGroup:AddToggle("ItemsNametags", {
                     end)
                 else
                     pcall(function()
-                        if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
-                            for _, v in pairs(workspace.Map.Ingame:GetChildren()) do
+                        if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") then
+                            for _, v in pairs(gameMap.Ingame:GetChildren()) do
                                 if v:IsA("Tool") and v:FindFirstChild("tool_nametag") then
                                     v.tool_nametag:Destroy()
                                 end
@@ -1048,6 +1128,46 @@ ItemsESPGroup:AddToggle("ItemsNametags", {
     Title = "Color",
 })
 
+MiscESPGroup:AddToggle("ZombieESP", {
+    Text = "1x1x1x1 Zombie ESP",
+    Default = false,
+    Callback = function(bool)
+        _G.killers = bool
+        task.spawn(function()
+            while task.wait() do
+                if _G.killers == true and not isKiller then
+                    if gameMap.Ingame:FindFirstChild("Map") then
+                        for _, v in pairs(gameMap.Ingame:GetChildren()) do
+                            if v.Name == "1x1x1x1Zombie" then
+                                if not v:FindFirstChild("zombie_esp") then
+                                    local hl = Instance.new("Highlight", v)
+                                    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                                    hl.Name = "zombie_esp"
+                                    hl.OutlineTransparency = 1
+                                else
+                                    v.zombie_esp.FillColor = Options.KillerESPColor.Value
+                                end
+                            end
+                        end
+                    end
+                else
+                    if gameMap.Ingame:FindFirstChild("Map") then
+                        for _, v in pairs(gameMap.Ingame:GetChildren()) do
+                            if v:FindFirstChild("zombie_esp") then
+                                v.zombie_esp:Destroy()
+                            end
+                        end
+                    end
+                    break
+                end
+            end
+        end)
+    end
+}):AddColorPicker("ZombieESPColor", {
+    Default = Color3.fromRGB(255, 0, 0),
+    Title = "Zombie Color",
+})
+
 ItemsGroup:AddToggle("AutoPickUpNearItems", {
     Text = "Auto Pick Up Near Items",
     Default = false,
@@ -1058,15 +1178,15 @@ ItemsGroup:AddToggle("AutoPickUpNearItems", {
                 pcall(function()
                     if isKiller then return end
                     local items = {}
-                    if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
-                        for _, v in pairs(workspace.Map.Ingame:GetDescendants()) do
+                    if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") then
+                        for _, v in pairs(gameMap.Ingame:GetDescendants()) do
                             if v:IsA("Tool") and v:FindFirstChild("ItemRoot") then
                                 table.insert(items, v.ItemRoot)
                             end
                         end
                     end
                     for _, itemRoot in pairs(items) do
-                        local lp = game.Players.LocalPlayer
+                        local lp = localPlayer
                         if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
                             local magnitude = (lp.Character.HumanoidRootPart.Position - itemRoot.Position).Magnitude
                             if magnitude <= 10 then
@@ -1088,8 +1208,8 @@ ItemsGroup:AddButton({
         pcall(function()
             if isKiller then return end
             local items = {}
-            if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
-                for _, v in pairs(workspace.Map.Ingame:GetDescendants()) do
+            if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") then
+                for _, v in pairs(gameMap.Ingame:GetDescendants()) do
                     if v:IsA("Tool") and v:FindFirstChild("ItemRoot") then
                         table.insert(items, v.ItemRoot)
                     end
@@ -1097,8 +1217,8 @@ ItemsGroup:AddButton({
             end
             for _, itemRoot in pairs(items) do
                 local toolName = itemRoot.Parent and itemRoot.Parent.Name
-                if toolName and not game.Players.LocalPlayer.Backpack:FindFirstChild(toolName) then
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = itemRoot.CFrame
+                if toolName and not localPlayer.Backpack:FindFirstChild(toolName) then
+                    localPlayer.Character.HumanoidRootPart.CFrame = itemRoot.CFrame
                     task.wait(0.5)
                     if itemRoot:FindFirstChild("ProximityPrompt") then
                         fireproximityprompt(itemRoot.ProximityPrompt)
@@ -1117,8 +1237,8 @@ ItemsGroup:AddButton({
         end
         pcall(function ()
             local items = {}
-            if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
-                for _, v in pairs(workspace.Map.Ingame:GetDescendants()) do
+            if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") then
+                for _, v in pairs(gameMap.Ingame:GetDescendants()) do
                     if v:IsA("Tool") then
                         table.insert(items, v)
                     end
@@ -1182,8 +1302,10 @@ task.spawn(function ()
     while true do
         if _G.fsprint then
             sprint.SprintSpeed = sprintSpeed
+            sprint.__sprintedEvent:Fire(true)
         else
             sprint.SprintSpeed = 26
+            sprint.__sprintedEvent:Fire(true)
         end
         task.wait()
     end 
@@ -1213,7 +1335,7 @@ SpeedGroup:AddToggle("SpeedToggle", {
     Callback = function (s)
         _G.mhhmmm = s
         task.spawn(function ()
-            local localPlayer = game:GetService("Players").LocalPlayer
+            local localPlayer = localPlayer
             while task.wait() do
                 if not _G.mhhmmm then break end
                 local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid")
@@ -1233,7 +1355,7 @@ NoclipGroup:AddToggle("EnableNoclip", {
         _G.nokia = s
         local cachey = {}
         task.spawn(function ()
-            local localPlayer = game:GetService("Players").LocalPlayer
+            local localPlayer = localPlayer
             while task.wait() do
                 if not _G.nokia then
                     for _, v in pairs(cachey) do
@@ -1275,7 +1397,7 @@ uis.InputEnded:Connect(function(h,g)
         up = false
     end
 end)
-local localPlayer = game.Players.LocalPlayer
+local localPlayer = localPlayer
 local fly = InfJumpGroup:AddToggle("InfiniteJump", {
     Text = "Fly",
     Default = false,
@@ -1408,8 +1530,8 @@ KillerGroup:AddToggle("AllowKillerEntrances", {
     Callback = function (call)
         _G.killerent = call
         local function s9audioak()
-            if not (workspace.Map and workspace.Map.Ingame and workspace.Map.Ingame:FindFirstChild("Map")) then return end
-            local walls = workspace.Map.Ingame.Map:FindFirstChild("Killer_Only Wall") or workspace.Map.Ingame.Map:FindFirstChild("KillerOnlyEntrances")
+            if not (gameMap and gameMap.Ingame and gameMap.Ingame:FindFirstChild("Map")) then return end
+            local walls = gameMap.Ingame.Map:FindFirstChild("Killer_Only Wall") or gameMap.Ingame.Map:FindFirstChild("KillerOnlyEntrances")
             if not walls then return end
             for _, v in pairs(walls:GetChildren()) do
                 v.CanCollide = true
@@ -1421,15 +1543,15 @@ KillerGroup:AddToggle("AllowKillerEntrances", {
         end
         task.spawn(function ()
             while _G.killerent and task.wait() do
-                if (workspace.Map and workspace.Map.Ingame and workspace.Map.Ingame:FindFirstChild("Map")) then
-                    local walls = workspace.Map.Ingame.Map:FindFirstChild("Killer_Only Wall") or workspace.Map.Ingame.Map:FindFirstChild("KillerOnlyEntrances")
+                if (gameMap and gameMap.Ingame and gameMap.Ingame:FindFirstChild("Map")) then
+                    local walls = gameMap.Ingame.Map:FindFirstChild("Killer_Only Wall") or gameMap.Ingame.Map:FindFirstChild("KillerOnlyEntrances")
                     if walls then
                         if not _G.killerent then
                             pcall(s9audioak)
                             break
                         end
                         pcall(function ()
-                            local walls = workspace.Map.Ingame.Map:FindFirstChild("Killer_Only Wall") or workspace.Map.Ingame.Map:FindFirstChild("KillerOnlyEntrances")
+                            local walls = gameMap.Ingame.Map:FindFirstChild("Killer_Only Wall") or gameMap.Ingame.Map:FindFirstChild("KillerOnlyEntrances")
                             if walls then
                                 for _, v in pairs(walls:GetChildren()) do
                                     v.CanCollide = false
@@ -1454,7 +1576,7 @@ KillerGroup:AddToggle("SpectateKiller", {
             end
         else
             pcall(function()
-                workspace.CurrentCamera.CameraSubject = game.Players.LocalPlayer.Character
+                workspace.CurrentCamera.CameraSubject = localPlayer.Character
             end)
         end
     end
@@ -1469,7 +1591,7 @@ KillerGroup:AddButton({
         local killer = workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers") and workspace.Players.Killers:GetChildren()[1]
         if killer then
             pcall(function ()
-                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = killer.PrimaryPart.CFrame
+                localPlayer.Character.HumanoidRootPart.CFrame = killer.PrimaryPart.CFrame
             end)
         end
     end
@@ -1485,7 +1607,7 @@ KillerGroup:AddButton({
             if not (workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors")) then return end
             local survs = workspace.Players.Survivors:GetChildren()
             if #survs == 0 then return end
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = survs[math.random(1, #survs)].HumanoidRootPart.CFrame
+            localPlayer.Character.HumanoidRootPart.CFrame = survs[math.random(1, #survs)].HumanoidRootPart.CFrame
         end)
     end
 })
@@ -1500,7 +1622,7 @@ KillerGroup:AddToggle('KillAll', {
             return Notify("Please be killer", "To use this feature, you must be killer", 7)
         end
         if not Toggles.KillAll.Value then return end
-        if game.Players.LocalPlayer:GetNetworkPing() >= 0.3 then
+        if localPlayer:GetNetworkPing() >= 0.3 then
             Toggles.KillAll:SetValue(false)
             return game.StarterGui:SetCore("SendNotification", { Title = "Kill all stopped", Text = "kill all stopped because your ping is too high. try getting better wifi and try again", Duration = 9 })
         end
@@ -1511,7 +1633,7 @@ KillerGroup:AddToggle('KillAll', {
             if plr then
                 local skipTimeout = tick()
                 while tick() - skipTimeout <= 15 do
-                    if game.Players.LocalPlayer:GetNetworkPing() >= 0.3 then
+                    if localPlayer:GetNetworkPing() >= 0.3 then
                         Toggles.KillAll:SetValue(false)
                         return game.StarterGui:SetCore("SendNotification", { Title = "Kill all stopped", Text = "kill all stopped because your ping is too high. try getting better wifi and try again", Duration = 9 })
                     end
@@ -1520,10 +1642,10 @@ KillerGroup:AddToggle('KillAll', {
                     if plr.Character:FindFirstChild("Humanoid") == nil then Toggles.KillAll:SetValue(false) return end
                     if plr.Character.Humanoid.Health <= 0 then  break end
                     if not Toggles.KillAll.Value then return end
-                    if not (workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame")) then  end
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame
-                    game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "Slash")
-                    game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "Punch")
+                    if not (workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame")) then  end
+                    localPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame
+                    Network:WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "Slash")
+                    Network:WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "Punch")
                     task.wait()
                 end
             end
@@ -1556,7 +1678,7 @@ KillerMisc:AddButton({
 })
 
 local function getASurvivor(dist)
-    local char = game.Players.LocalPlayer.Character
+    local char = localPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
@@ -1573,7 +1695,7 @@ end
 
 function getClosestSurvivor()
     local closest, dist = nil, math.huge
-    local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    local hrp = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return nil, nil end
     for _, s in pairs(workspace.Players.Survivors:GetChildren()) do
         local hrp2 = s:FindFirstChild("HumanoidRootPart")
@@ -1594,12 +1716,12 @@ KillerMisc:AddToggle("SlashAura", {
     Callback = function()
         task.spawn(function()
             while Toggles.SlashAura.Value do
-                local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                local hrp = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
                 if hrp then
                     local yh = getASurvivor(Options.SlashAuraRange.Value)
                     if yh then
-                        game:GetService("ReplicatedStorage").Modules.Network.RemoteEvent:FireServer("UseActorAbility", "Slash")
-                        game:GetService("ReplicatedStorage").Modules.Network.RemoteEvent:FireServer("UseActorAbility", "Punch")
+                        Network.RemoteEvent:FireServer("UseActorAbility", "Slash")
+                        Network.RemoteEvent:FireServer("UseActorAbility", "Punch")
                     end
                 end
                 task.wait(0.1)
@@ -1666,7 +1788,7 @@ KillerMisc:AddButton({
 
 local function getHitboxesFromPlayer()
     for i, v in pairs(game.Workspace.Hitboxes:GetChildren()) do
-        if string.find(v.Name, game.Players.LocalPlayer.Name) then
+        if string.find(v.Name, localPlayer.Name) then
             return true
         end
     end
@@ -1674,7 +1796,7 @@ end
 task.spawn(function()
     while true do
         if Toggles.HitboxExpander.Value and getHitboxesFromPlayer() then
-            local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character.HumanoidRootPart
+            local hrp = localPlayer.Character and localPlayer.Character.HumanoidRootPart
             if hrp then
                 local currentVelocity = hrp.Velocity
                 hrp.AssemblyLinearVelocity = hrp.CFrame.LookVector * 250
@@ -1695,15 +1817,15 @@ for i = 1, 5 do
                 return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
             end
             pcall(function ()
-                if not (workspace.Map and workspace.Map.Ingame and workspace.Map.Ingame.Map) then return end
+                if not (gameMap and gameMap.Ingame and gameMap.Ingame.Map) then return end
                 local gens = {}
-                for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+                for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                     if v.Name == "Generator" then
                         table.insert(gens, v)
                     end
                 end
                 if gens[i] and gens[i]:FindFirstChild("Positions") and gens[i].Positions:FindFirstChild("Center") then
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = gens[i].Positions.Center.CFrame + Vector3.new(0, 10, 0)
+                    localPlayer.Character.HumanoidRootPart.CFrame = gens[i].Positions.Center.CFrame + Vector3.new(0, 10, 0)
                 end
             end)
         end
@@ -1718,9 +1840,9 @@ for i = 1, 5 do
                 return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
             end
             local s, r = pcall(function ()
-                if not (workspace.Map and workspace.Map.Ingame and workspace.Map.Ingame.Map) then return end
+                if not (gameMap and gameMap.Ingame and gameMap.Ingame.Map) then return end
                 local gens = {}
-                for _, v in pairs(workspace.Map.Ingame.Map:GetChildren()) do
+                for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                     if v.Name == "Generator" then
                         table.insert(gens, v)
                     end
@@ -1742,8 +1864,8 @@ ItemsTP:AddButton({
             if playingState == "Spectating" then
                 return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
             end
-            if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") then
-                for _, v in pairs(workspace.Map.Ingame:GetDescendants()) do
+            if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") then
+                for _, v in pairs(gameMap.Ingame:GetDescendants()) do
                     if v:IsA("Tool") then
                         table.insert(items, v)
                     end
@@ -1751,7 +1873,7 @@ ItemsTP:AddButton({
             end
         end)
         if #items > 0 and items[1]:FindFirstChild("ItemRoot") then
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = items[math.random(1, #items)].ItemRoot.CFrame + Vector3.new(0, 10, 0)
+            localPlayer.Character.HumanoidRootPart.CFrame = items[math.random(1, #items)].ItemRoot.CFrame + Vector3.new(0, 10, 0)
         end
     end
 })
@@ -1766,7 +1888,7 @@ MiscGroup:AddToggle("AllowJump", {
             game.StarterGui:SetCore("SendNotification", { Title = "KICK WARNING", Text = "WARNING jumping repeatedly will KICK YOU because the game will think you are flying!", Duration = 9 })
         end
         task.spawn(function ()
-            local localPlayer = game:GetService("Players").LocalPlayer
+            local localPlayer = localPlayer
             while task.wait() do
                 if not _G.mhhmmm2 then break end
                 local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid")
@@ -1803,7 +1925,7 @@ MiscGroup:AddButton({
     Text = "Kill Yourself",
     Func = function ()
         pcall(function ()
-            game.Players.LocalPlayer.Character.Humanoid.Health = 0
+            localPlayer.Character.Humanoid.Health = 0
         end)
     end
 })
@@ -1811,20 +1933,20 @@ MiscGroup:AddButton({
     Text = "Rejoin",
     Func = function ()
         pcall(function ()
-            game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.localPlayer)
+            game:GetService("TeleportService"):Teleport(game.PlaceId, localPlayer)
         end)
     end
 })
 MiscGroup:AddToggle('IZD', {
     Text = "Infinite Zoom Distance",
     Callback = function(state)
-        game.Players.LocalPlayer.CameraMaxZoomDistance = state and math.huge or 12
+        localPlayer.CameraMaxZoomDistance = state and math.huge or 12
     end
 })
 MiscGroup:AddToggle('IZD', {
     Text = "Camera Noclip",
     Callback = function(state)
-        game.Players.LocalPlayer.DevCameraOcclusionMode = Enum.DevCameraOcclusionMode[state and "Invisicam" or "Zoom"]
+        localPlayer.DevCameraOcclusionMode = Enum.DevCameraOcclusionMode[state and "Invisicam" or "Zoom"]
     end
 })
 
@@ -1942,7 +2064,7 @@ local function pressReturnButton()
         return print("🥺")
     else
         local exists, GUI = pcall(function()
-            return game:GetService("Players").LocalPlayer.PlayerGui.EndScreen.Main.Return
+            return localPlayer.PlayerGui.EndScreen.Main.Return
         end)
         if not exists then
             return
@@ -2014,6 +2136,7 @@ pcall(function()
         Func = function ()
             for i, v in pairs(Toggles) do
                 pcall(function()
+                    if i == "FakeInjure" then return end
                     v:SetValue(false)
                 end)
             end
@@ -2023,6 +2146,7 @@ pcall(function()
     Library:OnUnload(function()
         for i, v in pairs(Toggles) do
             pcall(function()
+                if i == "FakeInjure" then return end
                 v:SetValue(false)
             end)
         end
@@ -2037,12 +2161,30 @@ AntiGroup:AddToggle("AutoRemove1x1x1x1", {
         _G.no1x= bool
         task.spawn(function ()
             while _G.no1x and task.wait() do
-                local temp = game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("TemporaryUI")
+                local temp = localPlayer.PlayerGui:FindFirstChild("TemporaryUI")
                 if temp and temp:FindFirstChild("1x1x1x1Popup") then
                     if firesignal then
                         firesignal(temp["1x1x1x1Popup"].MouseButton1Click)
                     end
                     warn("yes its gone, maybe")
+                end
+            end
+        end)
+    end
+})
+AntiGroup:AddToggle("AntiHealthGlitch", {
+    Text = "Anti Health Glitch",
+    Default = false,
+    Callback = function (bool)
+        _G.no1x2= bool
+        task.spawn(function ()
+            while _G.no1x2 and task.wait() do
+                local temp = localPlayer.PlayerGui:FindFirstChild("TemporaryUI")
+                for i, v in pairs(temp) do
+                    if v.Name == "Frame" and v:FindFirstChild("Glitched") then
+                        v:Destroy()
+                        Notify("deleted", "deleted health glitch", 6)
+                    end
                 end
             end
         end)
@@ -2211,13 +2353,13 @@ if canDoRequire then
                     break
                 end
             end
-            game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer("PlayEmote", "Animations", p)
+            Network:WaitForChild("RemoteEvent"):FireServer("PlayEmote", "Animations", p)
         end
     });
 end
 
 local function unlock(achieve)
-   local remote = game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent")
+   local remote = Network:WaitForChild("RemoteEvent")
    remote:FireServer("UnlockAchievement", achieve)
 end
 local BadgeGroup = Tabs.Misc:AddRightGroupbox("Achievements", "award")
@@ -2294,11 +2436,3 @@ SaveManager:SetSubFolder("Forsaken")
 SaveManager:SetFolder("NXP_Hub/Forsaken")
 SaveManager:BuildConfigSection(Tabs["UI Settings"])
 SaveManager:LoadAutoloadConfig()
-
-if _G.useLinoria then
-    while task.wait() do
-        Library.AccentColor = Library.CurrentRainbowColor
-        Library.AccentColorDark = Library:GetDarkerColor(Library.AccentColor);
-        Library:UpdateColorsUsingRegistry()
-    end
-end
