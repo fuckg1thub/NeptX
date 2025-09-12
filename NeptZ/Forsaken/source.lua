@@ -71,9 +71,6 @@ if identifyexecutor() ~= "Xeno" and identifyexecutor() ~= "Solara" then
                             _G._Notify("Blocked", "Hit blocked, you might've still taken damage though", 5)
                         end
                     end)
-                    if not suc then
-                        warn("error when auto blocking:", res)
-                    end
                 end
             end
         end)
@@ -150,26 +147,14 @@ _G._Notify = Notify
 Options = Library.Options or Options
 Toggles = Library.Toggles or Toggles
 
-local Window
-if not _G.useLinoria then
-    Window = Library:CreateWindow({
-        Title = "NXP hub V2.2",
-        Footer = "Forsaken",
-        Icon = "rbxassetid://130931198530758",
-        NotifySide = "Right",
-        ShowCustomCursor = true,
-        Size = UDim2.fromOffset(736, 450)
-    })
-else
-    Window = Library:CreateWindow({
-        Title = 'NXP Hub Linoria',
-        Center = true,
-        AutoShow = true,
-        TabPadding = 6,
-        MenuFadeTime = 0.2,
-        Size = UDim2.fromOffset(630, 600)
-    })
-end
+Window = Library:CreateWindow({
+    Title = "NXP hub V2.2",
+    Footer = "Forsaken",
+    Icon = "rbxassetid://130931198530758",
+    NotifySide = "Right",
+    ShowCustomCursor = true,
+    Size = UDim2.fromOffset(736, 370)
+})
 
 local Tabs = {
     ReadMe = Window:AddTab("Read Me", "info"),
@@ -393,9 +378,6 @@ GeneratorsGroup:AddToggle("AutoCompleteGenerator", {
                             end
                         end
                     end)
-                    if not suc then
-                        warn("error when auto completing generator:", res)
-                    end
                 end
             end
         end)
@@ -439,9 +421,6 @@ GeneratorsGroup:AddToggle("AutoStartGenerator", {
                             end
                         end
                     end)
-                    if not suc then
-                        warn("error when starting generator:", res)
-                    end
                 end
             end
         end)
@@ -479,9 +458,6 @@ GeneratorsGroup:AddButton({
                 end
             end
         end)
-        if not suc then
-            warn("error when completing current generator:", res)
-        end
     end
 })
 
@@ -542,9 +518,6 @@ GeneratorsGroup:AddButton({
                 end
             end
         end)
-        if not suc then
-            warn("error when completing generators:", res)
-        end
     end
 })
 
@@ -976,9 +949,6 @@ ItemsESPGroup:AddToggle("ItemsESP", {
                             end
                         end
                     end)
-                    if not suc then
-                        warn("error when adding item esp:", res)
-                    end
                 else
                     local suc, res = pcall(function()
                         if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then
@@ -1205,9 +1175,6 @@ StaminaGroup:AddToggle("FastSprint", {
     Default = false,
     Callback = function (call)
         _G.fsprint = call
-        if call then
-            game.StarterGui:SetCore("SendNotification", { Title = "KICK WARNING", Text = "this feature can get you kicked, and is EXTREMELY risky!", Duration = 9 })
-        end
     end
 })
 task.spawn(function ()
@@ -1263,9 +1230,6 @@ NoclipGroup:AddToggle("EnableNoclip", {
     Text = "Enable Noclip",
     Default = false,
     Callback = function (s)
-        if s == true then
-            game.StarterGui:SetCore("SendNotification", { Title = "KICK WARNING", Text = "you WILL get kicked if you are inside a wall for more than a second! only use for small shortcuts", Duration = 9 })
-        end
         _G.nokia = s
         local cachey = {}
         task.spawn(function ()
@@ -1655,6 +1619,10 @@ KillerMisc:AddSlider("SlashAuraRange", {
 KillerMisc:AddToggle("HitboxExpander", { 
     Text = "Reach Expander",
     Default = false,
+    Callback = function(v)
+        if not v then return end
+        Notify("Buggy Feature", "this feature is really buggy and idk why", 7)
+    end
 })
 
 KillerMisc:AddButton({
@@ -2041,6 +2009,25 @@ pcall(function()
             task.wait(0.3)
         end
     end)
+
+    MiscGroup:AddButton({
+        Text = "Panic",
+        Func = function ()
+            for i, v in pairs(Toggles) do
+                pcall(function()
+                    v:SetValue(false)
+                end)
+            end
+        end
+    })
+
+    Library:OnUnload(function()
+        for i, v in pairs(Toggles) do
+            pcall(function()
+                v:SetValue(false)
+            end)
+        end
+    end)
 end)
 
 local AntiGroup = Tabs.Anti:AddLeftGroupbox("Anti", "ban")
@@ -2260,58 +2247,51 @@ BadgeGroup:AddButton({
    Func = function() unlock("Morality") end,
 })
 
-if not _G.useLinoria then
-    local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu", "wrench")
-    MenuGroup:AddToggle("KeybindMenuOpen", {
-        Default = Library.KeybindFrame.Visible,
-        Text = "Open Keybind Menu",
-        Callback = function(value)
-            Library.KeybindFrame.Visible = value
-        end,
-    })
-    MenuGroup:AddButton('Unload', function() Library:Unload() end)
-    MenuGroup:AddToggle("ShowCustomCursor", {
-        Text = "Custom Cursor",
-        Default = true,
-        Callback = function(Value)
-            Library.ShowCustomCursor = Value
-        end,
-    })
-    MenuGroup:AddDropdown("NotificationSide", {
-        Values = { "Left", "Right" },
-        Default = "Right",
-        Text = "Notification Side",
-        Callback = function(Value)
-            Library:SetNotifySide(Value)
-        end,
-    })
-    MenuGroup:AddDropdown("DPIDropdown", {
-        Values = { "50%", "75%", "100%", "125%", "150%", "175%", "200%" },
-        Default = "100%",
-        Text = "DPI Scale",
-        Callback = function(Value)
-            Value = Value:gsub("%%", "")
-            local DPI = tonumber(Value)
-            Library:SetDPIScale(DPI)
-        end,
-    })
-    MenuGroup:AddLabel("Menu bind"):AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = "Menu keybind" })
-else
-    local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
-    MenuGroup:AddButton('Unload', function() Library:Unload() end)
-    MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'End', NoUI = true, Text = 'Menu keybind' })
-end
+local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu", "wrench")
+MenuGroup:AddToggle("KeybindMenuOpen", {
+    Default = Library.KeybindFrame.Visible,
+    Text = "Open Keybind Menu",
+    Callback = function(value)
+        Library.KeybindFrame.Visible = value
+    end,
+})
+MenuGroup:AddButton('Unload', function() Library:Unload() end)
+MenuGroup:AddToggle("ShowCustomCursor", {
+    Text = "Custom Cursor",
+    Default = true,
+    Callback = function(Value)
+        Library.ShowCustomCursor = Value
+    end,
+})
+MenuGroup:AddDropdown("NotificationSide", {
+    Values = { "Left", "Right" },
+    Default = "Right",
+    Text = "Notification Side",
+    Callback = function(Value)
+        Library:SetNotifySide(Value)
+    end,
+})
+MenuGroup:AddDropdown("DPIDropdown", {
+    Values = { "50%", "75%", "100%", "125%", "150%", "175%", "200%" },
+    Default = "100%",
+    Text = "DPI Scale",
+    Callback = function(Value)
+        Value = Value:gsub("%%", "")
+        local DPI = tonumber(Value)
+        Library:SetDPIScale(DPI)
+    end,
+})
+MenuGroup:AddLabel("Menu bind"):AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = "Menu keybind" })
+
 Library.ToggleKeybind = Options.MenuKeybind
-if not _G.useLinoria then
-    ThemeManager:SetLibrary(Library)
-    ThemeManager:ApplyToTab(Tabs["UI Settings"])
-    ThemeManager:SetFolder("NXP_Hub")
-    ThemeManager:ApplyTheme("Tokyo Night")
-end
+ThemeManager:SetLibrary(Library)
+ThemeManager:ApplyToTab(Tabs["UI Settings"])
+ThemeManager:SetFolder("NXP_Hub")
+ThemeManager:ApplyTheme("Tokyo Night")
 SaveManager:SetLibrary(Library)
 SaveManager:IgnoreThemeSettings()
 SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
-if not _G.useLinoria then SaveManager:SetSubFolder("Forsaken") end
+SaveManager:SetSubFolder("Forsaken")
 SaveManager:SetFolder("NXP_Hub/Forsaken")
 SaveManager:BuildConfigSection(Tabs["UI Settings"])
 SaveManager:LoadAutoloadConfig()
