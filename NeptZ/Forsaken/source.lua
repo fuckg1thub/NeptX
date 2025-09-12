@@ -1668,6 +1668,14 @@ KillerGroup:AddToggle('KillAll', {
         end
         if not (workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors")) then Toggles.KillAll:SetValue(false) return end
         for _, v in pairs(workspace.Players.Survivors:GetChildren()) do
+            if not (workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") and gameMap:FindFirstChild("Ingame"):FindFirstChild("Map")) then
+                Toggles.KillAll:SetValue(false)
+                return
+            end
+            if playingState == "Spectating" then
+                Toggles.KillAll:SetValue(false)
+                return
+            end
             local name = v:GetAttribute("Username")
             local plr = game.Players:FindFirstChild(name)
             if plr then
@@ -1684,21 +1692,12 @@ KillerGroup:AddToggle('KillAll', {
                         break
                     end
                     if plr.Character:FindFirstChild("Humanoid") == nil then
-                        Toggles.KillAll:SetValue(false)
-                        return
+                        break
                     end
                     if plr.Character.Humanoid.Health <= 0 then
                         break
                     end
                     if not Toggles.KillAll.Value then
-                        return
-                    end
-                    if not (workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") and gameMap:FindFirstChild("Ingame"):FindFirstChild("Map")) then
-                        Toggles.KillAll:SetValue(false)
-                        return
-                    end
-                    if playingState == "Spectating" then
-                        Toggles.KillAll:SetValue(false)
                         return
                     end
                     enableNoclip()
@@ -1720,12 +1719,28 @@ KillerGroup:AddToggle('VoidRushNoclip', {
     Text = "Void Rush Noclip"
 })
 
+KillerGroup:AddToggle('WalkspeedAntiCollision', {
+    Text = "WS Override Anti Collision"
+})
+
 pcall(function()
     local old
     old = hookmetamethod(game, "__namecall", function(self, ...)
         local args = {...}
         if type(args[1]) == "string" and string.find(args[1], localPlayer.Name) and string.find(args[1], "VoidRushCollision") then
             if Toggles.VoidRushCollision.Value then
+                return
+            end
+        end
+        return old(self, ...)
+    end)
+end)
+pcall(function()
+    local old
+    old = hookmetamethod(game, "__namecall", function(self, ...)
+        local args = {...}
+        if type(args[1]) == "string" and string.find(args[1], localPlayer.Name) and string.find(args[1], "C00lkiddCollision") then
+            if Toggles.WalkspeedAntiCollision.Value then
                 return
             end
         end
@@ -1827,7 +1842,7 @@ KillerMisc:AddToggle("SlashAura", {
                             killerAttack()
                         end
                     else
-                        if killerModel then
+                        if killerModel and killerModel:FindFirstChild("HumanoidRootPart") then
                             local dist = (hrp.Position - killerModel.HumanoidRootPart.Position).magnitude
                             if dist <= Options.SlashAuraRange.Value then
                                 killerAttack()
