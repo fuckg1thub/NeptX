@@ -1621,7 +1621,7 @@ KillerMisc:AddToggle("HitboxExpander", {
     Default = false,
     Callback = function(v)
         if not v then return end
-        Notify("Buggy Feature", "this feature is really buggy and idk why", 7)
+        Notify("Buggy Feature", "this feature is really buggy and idk why but if you execute the script twice it works but u get kicked sometimes", 7)
     end
 })
 
