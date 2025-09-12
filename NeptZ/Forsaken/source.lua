@@ -1,3 +1,4 @@
+-- finally fucking hitbox expander is fixed
 -- NXP Hub forsaken source code, do not copy any of the code in here please, its my work and you dont have permission to use it.
 
 -- Added some extra features and fixed some bugs
@@ -1675,15 +1676,18 @@ local function getHitboxesFromPlayer()
         end
     end
 end
-game:GetService("RunService").Heartbeat:Connect(function()
-    if Toggles.HitboxExpander.Value and getHitboxesFromPlayer() then
-        local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character.HumanoidRootPart
-        if hrp then
-            local currentVelocity = hrp.Velocity
-            hrp.AssemblyLinearVelocity = hrp.CFrame.LookVector * 250
-            game:GetService("RunService").RenderStepped:Wait()
-            hrp.Velocity = currentVelocity 
+task.spawn(function()
+    while true do
+        if Toggles.HitboxExpander.Value and getHitboxesFromPlayer() then
+            local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character.HumanoidRootPart
+            if hrp then
+                local currentVelocity = hrp.Velocity
+                hrp.AssemblyLinearVelocity = hrp.CFrame.LookVector * 250
+                game:GetService("RunService").RenderStepped:Wait()
+                hrp.Velocity = currentVelocity 
+            end
         end
+        task.wait()
     end
 end)
 
