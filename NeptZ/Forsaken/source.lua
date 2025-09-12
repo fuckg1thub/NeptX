@@ -623,11 +623,6 @@ GeneratorsGroup:AddSlider("GeneratorDelay2", {
     Rounding = 1,
 })
 
-GeneratorsGroup:AddToggle("ShowPuzzleInAuto", {
-    Text = "Show Puzzle UI When Auto",
-    Default = true
-})
-
 local aimbotHeld = false
 local uis = game:GetService("UserInputService")
 uis.InputBegan:Connect(function (i)
