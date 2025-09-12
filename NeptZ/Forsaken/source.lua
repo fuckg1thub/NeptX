@@ -1365,8 +1365,6 @@ InfJumpGroup:AddSlider("FlyVerticalSpeed", {
 })
 
 local loopRunning, loopThread, currentAnim, lastAnim
-local animDeleteTick = tick()
-local anims = {}
 local anim = Instance.new("Animation")
 anim.AnimationId = "rbxassetid://75804462760596"
 InfJumpGroup:AddToggle("Invis", {
@@ -1378,6 +1376,7 @@ InfJumpGroup:AddToggle("Invis", {
             return Notify("Please use in real forsaken", "Invisibility doesnt work in games that are not the real forsaken", 8)
         end
         if Value then
+            Notify("Warning", "You can still be seen when people use certain abilities or if they have the collision hitboxes setting on.", 6)
             loopRunning = true
             loopThread = task.spawn(function()
                 while loopRunning do
@@ -1701,17 +1700,22 @@ KillerMisc:AddButton({
     end
 })
 
-workspace.Hitboxes.ChildAdded:Connect(function(v)
-    if string.find(v.Name, game.Players.LocalPlayer.Name) and Toggles.HitboxExpander.Value then
-        local rooting = game.Players.LocalPlayer.Character.HumanoidRootPart
-        local startCF = rooting.CFrame
-        local shit = v.CFrame.LookVector
-        local t = tick()
-        while (tick() - t <= 0.6) and task.wait() do
-            rooting.CFrame = startCF
-            rooting.AssemblyLinearVelocity = rooting.AssemblyLinearVelocity + (shit * 15)
+local function getHitboxesFromPlayer()
+    for i, v in pairs(game.Workspace.Hitboxes:GetChildren()) do
+        if string.find(v.Name, game.Players.LocalPlayer.Name) then
+            return true
         end
-        rooting.AssemblyLinearVelocity, rooting.Velocity = Vector3.zero, Vector3.zero
+    end
+end
+game:GetService("RunService").Heartbeat:Connect(function()
+    if Toggles.HitboxExpander.Value and getHitboxesFromPlayer() then
+        local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character.HumanoidRootPart
+        if hrp then
+            local currentVelocity = hrp.Velocity
+            hrp.AssemblyLinearVelocity = hrp.CFrame.LookVector * 250
+            game:GetService("RunService").RenderStepped:Wait()
+            hrp.Velocity = currentVelocity 
+        end
     end
 end)
 
