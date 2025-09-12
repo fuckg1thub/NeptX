@@ -5,7 +5,7 @@
 ]]
 
 -- Added some extra features and fixed some bugs
--- Updated version to V2.2 (are we making improvements chat)
+-- Updated version to V3 (why did we go from V1 to V2 to V.2 to V3?)
 
 local function debugCall(suc, res)
     if (not suc) and (res ~= nil) then
@@ -20,9 +20,9 @@ local replicatedStorage = game:GetService("ReplicatedStorage")
 local Network = replicatedStorage:WaitForChild("Modules"):WaitForChild("Network")
 local gameMap = workspace.Map
 
-local h = 0
+local pathfindingIndex = 0
 local function pathfindTo(targetPos)
-    local hNow = h
+    local indexNow = pathfindingIndex
     local plr = Players.LocalPlayer
     local char = plr.Character
     if not char then return end
@@ -43,14 +43,15 @@ local function pathfindTo(targetPos)
 
     if path.Status == Enum.PathStatus.Success then
         for _, waypoint in ipairs(path:GetWaypoints()) do
-            if hNow ~= h then return end
-            repeat hum:MoveTo(waypoint.Position) task.wait() until ((root.Position * Vector3.new(1, 0, 1)) - (waypoint.Position * Vector3.new(1, 0, 1))).magnitude <= 2 or not plr.Character.HumanoidRootPart or hNow ~= h
+            if indexNow ~= pathfindingIndex then return end
+            repeat hum:MoveTo(waypoint.Position) task.wait() until ((root.Position * Vector3.new(1, 0, 1)) - (waypoint.Position * Vector3.new(1, 0, 1))).magnitude <= 2 or not plr.Character.HumanoidRootPart or indexNow ~= pathfindingIndex
             if waypoint.Action == Enum.PathWaypointAction.Jump then
                 hum.Jump = true
             end
         end
     else
-        warn("Path failed!")
+        _Notify("Pathfinding", "Path failed! Resorted to teleporting", 7)
+        root.CFrame = CFrame.new(targetPos)
     end
 end
 
@@ -66,6 +67,7 @@ local function hasAbilityReady(name)
     if not hasAbility(name) then
         return false
     end
+
     return hasAbility(name).CooldownTime.Text == ""
 end
 
@@ -155,25 +157,20 @@ local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
 
 local function Notify(Title, Text, Duration)
-    if _G.useLinoria then
-        Library:Notify(Text, Duration)
-    else
-        Library:Notify({
-            Title = Title,
-            Description = Text,
-            Time = Duration,
-        })
-    end
+    Library:Notify({
+        Title = Title,
+        Description = Text,
+        Time = Duration,
+    })
 end
-
 _G._Notify = Notify
 
-Options = Library.Options or Options
-Toggles = Library.Toggles or Toggles
+Options = Library.Options
+Toggles = Library.Toggles
 
 Window = Library:CreateWindow({
-    Title = "NXP hub V2.2",
-    Footer = "Forsaken",
+    Title = "NXP hub V3",
+    Footer = "Forsaken | Keyless Source",
     Icon = "rbxassetid://130931198530758",
     NotifySide = "Right",
     ShowCustomCursor = true,
@@ -184,8 +181,8 @@ local Tabs = {
     ReadMe = Window:AddTab("Read Me", "info"),
     Main = Window:AddTab("Main", "zap"),
     ESP = Window:AddTab("Visuals", "eye"),
-    ["Local Player"] = Window:AddTab("Local Player", "user"),
-    Killer = Window:AddTab("Killer", "skull"),
+    ["Local Player"] = Window:AddTab("Local", "user"), -- renamed to local
+    Killer = Window:AddTab("Player", "pencil"), -- renamed to player
     Teleport = Window:AddTab("Locations", "pin"),
     Anti = Window:AddTab("Antis", "ban"),
     Misc = Window:AddTab("Misc", "cloudy"),
@@ -238,14 +235,17 @@ local function getClosestSurvivorToMouse(x, y)
             end
         end
     end
+
     return closestSurvivor
 end
 
 do
     local Credits = Tabs.ReadMe:AddLeftGroupbox("Credits")
-    Credits:AddButton({ Text = utf8.char(128147) .. " Made by neptunescripts :3", Func = function() end })
+    Credits:AddLabel({
+        Text = "NXP Hub is an open source and keyless script by \"! nxp\" (@neptunescripts) on discord. open source means the scripts code is publicly available to read! we also doesnt log our users.",
+        DoesWrap = true
+    })
     Credits:AddButton({ Text = "rscripts: @NXPHub", Func = function() setclipboard("https://rscripts.net/@NXPHub") end })
-    Credits:AddButton({ Text = "my scriptblox got banned :(", Func = function()  end })
 end
 
 local GeneratorsGroup = Tabs.Main:AddLeftGroupbox("Generators", "battery-charging")
@@ -258,10 +258,36 @@ local KillersESPGroup = Tabs.ESP:AddLeftGroupbox("Killers ESP", "skull")
 local SurvivorsESPGroup = Tabs.ESP:AddRightGroupbox("Survivors ESP", "user")
 local ItemsESPGroup = Tabs.ESP:AddRightGroupbox("Items ESP", "shovel")
 local MiscESPGroup = Tabs.ESP:AddRightGroupbox("Misc ESP", "chart-no-axes-gantt")
+local ESPSettingsGroup = Tabs.ESP:AddLeftGroupbox("ESP Settings", "settings")
 
 local function generatorWait()
     task.wait(Options.GeneratorDelay1.Value < Options.GeneratorDelay2.Value and math.random(Options.GeneratorDelay1.Value * 10, Options.GeneratorDelay2.Value * 10) / 10 or math.random(Options.GeneratorDelay2.Value * 10, Options.GeneratorDelay1.Value * 10) / 10)
 end
+
+ESPSettingsGroup:AddToggle("ShowOutlinesInESP", {
+    Text = "Show Outlines",
+}):AddColorPicker("ESPOutlineColor", {
+    Default = Color3.fromRGB(255, 255, 255),
+    Title = "Outline Color",
+})
+--[[ESPSettingsGroup:AddToggle("OnlyShowOutlinesInESP", {
+    Text = "Dont Fill",
+    Callback = function()
+        task.spawn(function()
+            while Toggles.OnlyShowOutlinesInESP.Value and task.wait() do
+                Toggles.ShowOutlinesInESP:SetValue(true)
+            end
+        end)
+    end
+})]]
+
+ESPSettingsGroup:AddSlider("ESPFillTransparency", {
+    Text = "Fill Transparency",
+    Default = 0,
+    Min = 0,
+    Max = 1,
+    Rounding = 1,
+})
 
 GeneratorsESPGroup:AddToggle("GeneratorsESP", {
     Text = "Generators ESP",
@@ -272,14 +298,13 @@ GeneratorsESPGroup:AddToggle("GeneratorsESP", {
         task.spawn(function()
             while task.wait() do
                 if _G.generators then
-                    pcall(function()
+                    debugCall(pcall(function()
                         if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") and gameMap.Ingame:FindFirstChild("Map") then
                             for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                                 if v.Name == "Generator" and not v:FindFirstChild("gen_esp") then
                                     local hl = Instance.new("Highlight", v)
                                     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                                     hl.Name = "gen_esp"
-                                    hl.OutlineTransparency = 1
                                 elseif v:FindFirstChild("gen_esp") and v.Name == "Generator" then
                                     if v:FindFirstChild("Progress") then
                                         if v.Progress.Value < 100 or not Toggles.GeneratorsESPGreen.Value then
@@ -287,15 +312,19 @@ GeneratorsESPGroup:AddToggle("GeneratorsESP", {
                                         end
                                     end
 
+                                    v.gen_esp.OutlineTransparency = Toggles.ShowOutlinesInESP.Value and 0 or 1
+                                    v.gen_esp.FillTransparency = Options.ESPFillTransparency.Value
+                                    v.gen_esp.OutlineColor = Options.ESPOutlineColor.Value
+
                                     if v:FindFirstChild("Progress") and v.Progress.Value >= 100 and Toggles.GeneratorsESPGreen.Value then
                                         v.gen_esp.FillColor = Color3.fromRGB(0, 255, 0)
                                     end
                                 end
                             end
                         end
-                    end)
+                    end))
                 else
-                    pcall(function()
+                    debugCall(pcall(function()
                         if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") and gameMap.Ingame:FindFirstChild("Map") then
                             for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                                 if v.Name == "Generator" and v:FindFirstChild("gen_esp") then
@@ -303,7 +332,7 @@ GeneratorsESPGroup:AddToggle("GeneratorsESP", {
                                 end
                             end
                         end
-                    end)
+                    end))
                     break
                 end
             end
@@ -374,16 +403,7 @@ GeneratorsESPGroup:AddToggle("GeneratorsNametags", {
 
 local generatorsDid = {}
 local activelyAutoing = false
-local tbl = {
-    tooFar = "Move a bit closer to an available side of the generator and try again.";
-    positionOccupied = "Move to another side of the generator and try again.";
-    tooMany = "Too many people are fixing the generator right now. Try again later.";
-    alreadyFixed = "This generator's already been fixed. Go try fixing another one.";
-    dead = "Try not to die next time.";
-    isKiller = "You're supposed to be killing them, not helping them. Go do that.";
-    isUnknownTeam = "Dude what r u doing rn you're a spectator";
-    leftAlready = "";
-}
+
 GeneratorsGroup:AddToggle("AutoCompleteGenerator", {
     Text = "Auto Complete Generator",
     Default = false,
@@ -413,20 +433,9 @@ GeneratorsGroup:AddToggle("AutoCompleteGenerator", {
                                             return old("leave")
                                         end
 
-                                        if Toggles.ShowPuzzleInAuto.Value then
-                                            old("enter")
-
-                                            for i, v in pairs(tbl) do
-                                                if hasNotification(v) then
-                                                    return
-                                                end
-                                            end
-                                        else
-                                            local result = v.Remotes.RF:InvokeServer("enter")
-
-                                            if result ~= "fixing" then
-                                                return
-                                            end
+                                        local result = v.Remotes.RF:InvokeServer("enter")
+                                        if result ~= "fixing" then
+                                            return
                                         end
 
                                         activelyAutoing = true
@@ -577,20 +586,10 @@ GeneratorsGroup:AddButton({
 
                         task.wait(0.2)
                         
-                        if Toggles.ShowPuzzleInAuto.Value then
-                            getsenv(v.Scripts.Client).toggleGeneratorState("enter")
 
-                            for i, v in pairs(tbl) do
-                                if hasNotification(v) then
-                                    return
-                                end
-                            end
-                        else
-                            local result = v.Remotes.RF:InvokeServer("enter")
-
-                            if result ~= "fixing" then
-                                return
-                            end
+                        local result = v.Remotes.RF:InvokeServer("enter")
+                        if result ~= "fixing" then
+                            return
                         end
 
                         for j = 1, 4 do
@@ -698,9 +697,11 @@ KillersESPGroup:AddToggle("KillerESP", {
                                 local hl = Instance.new("Highlight", v)
                                 hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                                 hl.Name = "killer_esp"
-                                hl.OutlineTransparency = 1
                             else
                                 v.killer_esp.FillColor = Options.KillerESPColor.Value
+                                v.killer_esp.OutlineTransparency = Toggles.ShowOutlinesInESP.Value and 0 or 1
+                                v.killer_esp.FillTransparency = Options.ESPFillTransparency.Value
+                                v.killer_esp.OutlineColor = Options.ESPOutlineColor.Value
                             end
                         end
                     end
@@ -778,9 +779,11 @@ SurvivorsESPGroup:AddToggle("SurvivorESP", {
                                     local hl = Instance.new("Highlight", v)
                                     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                                     hl.Name = "survivor_esp"
-                                    hl.OutlineTransparency = 1
                                 else    
                                     v.survivor_esp.FillColor = Options.SurvivorsESP.Value
+                                    v.survivor_esp.OutlineTransparency = Toggles.ShowOutlinesInESP.Value and 0 or 1
+                                    v.survivor_esp.FillTransparency = Options.ESPFillTransparency.Value
+                                    v.survivor_esp.OutlineColor = Options.ESPOutlineColor.Value
                                 end
                             end
                         end
@@ -1008,16 +1011,18 @@ ItemsESPGroup:AddToggle("ItemsESP", {
         task.spawn(function()
             while task.wait() do
                 if _G.items == true then
-                    local suc, res = pcall(function()
-                        if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") then
+                    debugCall(pcall(function()
+                        if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") and gameMap.Ingame:FindFirstChild("Map") then
                             for _, v in pairs(gameMap.Ingame:GetChildren()) do
                                 if v:IsA("Tool") and not v:FindFirstChild("tool_esp") then
                                     local hl = Instance.new("Highlight", v)
                                     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                                     hl.Name = "tool_esp"
-                                    hl.OutlineTransparency = 1
                                 elseif v:IsA("Tool") and v:FindFirstChild("tool_esp") then
                                     v.tool_esp.FillColor = Options.ItemsESPColor.Value
+                                    v.tool_esp.OutlineTransparency = Toggles.ShowOutlinesInESP.Value and 0 or 1
+                                    v.tool_esp.FillTransparency = Options.ESPFillTransparency.Value
+                                    v.tool_esp.OutlineColor = Options.ESPOutlineColor.Value
                                 end
                             end
                             for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
@@ -1025,15 +1030,18 @@ ItemsESPGroup:AddToggle("ItemsESP", {
                                     local hl = Instance.new("Highlight", v)
                                     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                                     hl.Name = "tool_esp"
-                                    hl.OutlineTransparency = 1
+                                    hl.OutlineTransparency = Toggles.ShowOutlinesInESP.Value and 0 or 1
                                 elseif v:IsA("Tool") and v:FindFirstChild("tool_esp") then
                                     v.tool_esp.FillColor = Options.ItemsESPColor.Value
+                                    v.tool_esp.OutlineTransparency = Toggles.ShowOutlinesInESP.Value and 0 or 1
+                                    v.tool_esp.FillTransparency = Options.ESPFillTransparency.Value
+                                    v.tool_esp.OutlineColor = Options.ESPOutlineColor.Value
                                 end
                             end
                         end
-                    end)
+                    end))
                 else
-                    local suc, res = pcall(function()
+                    debugCall(pcall(function()
                         if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") and gameMap.Ingame:FindFirstChild("Map") then
                             for _, v in pairs(gameMap.Ingame:GetChildren()) do
                                 if v:IsA("Tool") and v:FindFirstChild("tool_esp") then
@@ -1046,10 +1054,7 @@ ItemsESPGroup:AddToggle("ItemsESP", {
                                 end
                             end
                         end
-                    end)
-                    if not suc then
-                        warn("error when removing item esp:", res)
-                    end
+                    end))
                     break
                 end
             end
@@ -1143,9 +1148,11 @@ MiscESPGroup:AddToggle("ZombieESP", {
                                     local hl = Instance.new("Highlight", v)
                                     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                                     hl.Name = "zombie_esp"
-                                    hl.OutlineTransparency = 1
                                 else
-                                    v.zombie_esp.FillColor = Options.KillerESPColor.Value
+                                    v.zombie_esp.FillColor = Options.ZombieESPColor.Value
+                                    v.zombie_esp.OutlineTransparency = Toggles.ShowOutlinesInESP.Value and 0 or 1
+                                    v.zombie_esp.FillTransparency = Options.ESPFillTransparency.Value
+                                    v.zombie_esp.OutlineColor = Options.ESPOutlineColor.Value
                                 end
                             end
                         end
@@ -1179,7 +1186,12 @@ ItemsGroup:AddToggle("AutoPickUpNearItems", {
                     if isKiller then return end
                     local items = {}
                     if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") then
-                        for _, v in pairs(gameMap.Ingame:GetDescendants()) do
+                        for _, v in pairs(gameMap.Ingame:GetChildren()) do
+                            if v:IsA("Tool") and v:FindFirstChild("ItemRoot") then
+                                table.insert(items, v.ItemRoot)
+                            end
+                        end
+                        for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                             if v:IsA("Tool") and v:FindFirstChild("ItemRoot") then
                                 table.insert(items, v.ItemRoot)
                             end
@@ -1272,6 +1284,7 @@ StaminaGroup:AddToggle("InfStamina", {
         end
     end
 })
+
 StaminaGroup:AddToggle("AlwaysSprint", {
     Text = "Always Sprint",
     Default = false,
@@ -1297,30 +1310,41 @@ StaminaGroup:AddToggle("FastSprint", {
         _G.fsprint = call
     end
 })
+
 task.spawn(function ()
     local sprint = require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting)
     while true do
         if _G.fsprint then
             sprint.SprintSpeed = sprintSpeed
-            sprint.__sprintedEvent:Fire(true)
         else
             sprint.SprintSpeed = 26
-            sprint.__sprintedEvent:Fire(true)
         end
         task.wait()
     end 
 end)
+
 StaminaGroup:AddSlider("SprintSpeed", {
     Text = "Sprint Speed",
     Default = 26,
     Min = 26,
     Max = 80,
     Rounding = 0,
-    Callback = function (slid) sprintSpeed = slid end
+    Callback = function (slid)
+        sprintSpeed = slid
+
+        local sprint = require(game:GetService("ReplicatedStorage").Systems.Character.Game.Sprinting)
+        if sprint.IsSprinting then
+            sprint.IsSprinting = false
+            sprint.__sprintedEvent:Fire(false)
+            sprint.IsSprinting = true
+            sprint.__sprintedEvent:Fire(true)
+        end
+    end
 })
 
 local SpeedGroup = Tabs["Local Player"]:AddRightGroupbox("Speed", "wind")
 local yeahvariable = 0
+
 SpeedGroup:AddSlider("SpeedBypass", {
     Text = "Speed (Bypass)",
     Default = 16,
@@ -1333,11 +1357,11 @@ SpeedGroup:AddToggle("SpeedToggle", {
     Text = "Speed Toggle",
     Default = false,
     Callback = function (s)
-        _G.mhhmmm = s
+        _G.SpeedToggle = s
         task.spawn(function ()
             local localPlayer = localPlayer
             while task.wait() do
-                if not _G.mhhmmm then break end
+                if not _G.SpeedToggle then break end
                 local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid")
                 if humanoid and humanoid.MoveDirection ~= Vector3.zero then
                     localPlayer.Character:TranslateBy(humanoid.MoveDirection * yeahvariable * game:GetService("RunService").RenderStepped:Wait())
@@ -1352,21 +1376,21 @@ NoclipGroup:AddToggle("EnableNoclip", {
     Text = "Enable Noclip",
     Default = false,
     Callback = function (s)
-        _G.nokia = s
-        local cachey = {}
+        _G.noclipState = s
+        local cachedParts = {}
         task.spawn(function ()
-            local localPlayer = localPlayer
             while task.wait() do
-                if not _G.nokia then
+                if not _G.noclipState then
                     for _, v in pairs(cachey) do
                         v.CanCollide = true
                     end
                     break
                 end
+
                 if localPlayer.Character then
                     for _, v in pairs(localPlayer.Character:GetChildren()) do
                         if v:IsA("BasePart") then
-                            cachey[v] = v
+                            cachedParts[v] = v
                             v.CanCollide = false
                         end
                     end
@@ -1408,12 +1432,15 @@ local fly = InfJumpGroup:AddToggle("InfiniteJump", {
                     local root = localPlayer.Character:FindFirstChild("Humanoid") and localPlayer.Character:FindFirstChild("HumanoidRootPart")
                     if root then
                         local vel = 2.45
+
                         if up then
                             vel = vel + Options.FlyVerticalSpeed.Value - 2.45
                         end
+
                         if down then
                             vel = vel - Options.FlyVerticalSpeed.Value + 2.45
                         end
+
                         if root then
                             root.Velocity = Vector3.new(root.Velocity.X, vel, root.Velocity.Z)
                             if localPlayer.Character.Humanoid.MoveDirection ~= Vector3.zero then
@@ -1464,6 +1491,7 @@ InfJumpGroup:AddToggle("Invis", {
         if Value then
             Notify("Warning", "You can still be seen when people use certain abilities or if they have the collision hitboxes setting on.", 6)
             loopRunning = true
+
             loopThread = task.spawn(function()
                 while loopRunning do
                     local hum = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") and localPlayer.Character:FindFirstChild("Humanoid")
@@ -1474,6 +1502,7 @@ InfJumpGroup:AddToggle("Invis", {
                             end
                         end
                     end
+
                     if hum then
                         local loadedAnim = hum:LoadAnimation(anim)
                         currentAnim = loadedAnim
@@ -1494,14 +1523,17 @@ InfJumpGroup:AddToggle("Invis", {
             end)
         else
             loopRunning = false
+
             if loopThread then
                 loopRunning = false
                 task.cancel(loopThread)
             end
+
             if currentAnim then
                 currentAnim:Stop()
                 currentAnim = nil
             end
+
             local Humanoid = localPlayer.Character and (localPlayer.Character:FindFirstChildOfClass("Humanoid") or localPlayer.Character:FindFirstChildOfClass("AnimationController"))
             if Humanoid then
                 for _, v in pairs(Humanoid:GetPlayingAnimationTracks()) do
@@ -1513,6 +1545,7 @@ InfJumpGroup:AddToggle("Invis", {
                     end
                 end
             end
+
             local animateScript = localPlayer.Character and localPlayer.Character:FindFirstChild("Animate")
             if animateScript then
                 animateScript.Disabled = true
@@ -1537,20 +1570,24 @@ KillerGroup:AddToggle("AllowKillerEntrances", {
                 v.CanCollide = true
             end
         end
+
         if not _G.killerent then
             pcall(s9audioak)
             return
         end
+
         task.spawn(function ()
             while _G.killerent and task.wait() do
                 if (gameMap and gameMap.Ingame and gameMap.Ingame:FindFirstChild("Map")) then
                     local walls = gameMap.Ingame.Map:FindFirstChild("Killer_Only Wall") or gameMap.Ingame.Map:FindFirstChild("KillerOnlyEntrances")
+
                     if walls then
                         if not _G.killerent then
                             pcall(s9audioak)
                             break
                         end
-                        pcall(function ()
+
+                        pcall(function()
                             local walls = gameMap.Ingame.Map:FindFirstChild("Killer_Only Wall") or gameMap.Ingame.Map:FindFirstChild("KillerOnlyEntrances")
                             if walls then
                                 for _, v in pairs(walls:GetChildren()) do
@@ -1588,9 +1625,10 @@ KillerGroup:AddButton({
         if playingState == "Spectating" then
             return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
         end
+
         local killer = workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Killers") and workspace.Players.Killers:GetChildren()[1]
         if killer then
-            pcall(function ()
+            pcall(function()
                 localPlayer.Character.HumanoidRootPart.CFrame = killer.PrimaryPart.CFrame
             end)
         end
@@ -1607,6 +1645,7 @@ KillerGroup:AddButton({
             if not (workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild("Survivors")) then return end
             local survs = workspace.Players.Survivors:GetChildren()
             if #survs == 0 then return end
+
             localPlayer.Character.HumanoidRootPart.CFrame = survs[math.random(1, #survs)].HumanoidRootPart.CFrame
         end)
     end
@@ -1632,7 +1671,7 @@ KillerGroup:AddToggle('KillAll', {
             local plr = game.Players:FindFirstChild(name)
             if plr then
                 local skipTimeout = tick()
-                while tick() - skipTimeout <= 15 do
+                while tick() - skipTimeout <= 25 do
                     if localPlayer:GetNetworkPing() >= 0.3 then
                         Toggles.KillAll:SetValue(false)
                         return game.StarterGui:SetCore("SendNotification", { Title = "Kill all stopped", Text = "kill all stopped because your ping is too high. try getting better wifi and try again", Duration = 9 })
@@ -1642,7 +1681,7 @@ KillerGroup:AddToggle('KillAll', {
                     if plr.Character:FindFirstChild("Humanoid") == nil then Toggles.KillAll:SetValue(false) return end
                     if plr.Character.Humanoid.Health <= 0 then  break end
                     if not Toggles.KillAll.Value then return end
-                    if not (workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame")) then  end
+                    if not (workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") and gameMap:FindFirstChild("Ingame"):FindFirstChild("Map")) then Toggles.KillAll:SetValue(false) end
                     localPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame
                     Network:WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "Slash")
                     Network:WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "Punch")
@@ -1718,10 +1757,20 @@ KillerMisc:AddToggle("SlashAura", {
             while Toggles.SlashAura.Value do
                 local hrp = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
                 if hrp then
-                    local yh = getASurvivor(Options.SlashAuraRange.Value)
-                    if yh then
-                        Network.RemoteEvent:FireServer("UseActorAbility", "Slash")
-                        Network.RemoteEvent:FireServer("UseActorAbility", "Punch")
+                    if isKiller then
+                        local yh = getASurvivor(Options.SlashAuraRange.Value)
+                        if yh then
+                            Network.RemoteEvent:FireServer("UseActorAbility", "Slash")
+                            Network.RemoteEvent:FireServer("UseActorAbility", "Punch")
+                        end
+                    else
+                        if killerModel then
+                            local dist = (hrp.Position - killerModel.HumanoidRootPart.Position).magnitude
+                            if dist <= Options.SlashAuraRange.Value then
+                                Network.RemoteEvent:FireServer("UseActorAbility", "Slash") -- shedleskty
+                                Network.RemoteEvent:FireServer("UseActorAbility", "Punch") -- guest 1337?
+                            end
+                        end
                     end
                 end
                 task.wait(0.1)
@@ -1743,27 +1792,70 @@ KillerMisc:AddToggle("HitboxExpander", {
     Default = false,
 })
 
+local function assist(target, dist)
+    if target and dist <= 25 then
+        local pos = localPlayer.Character.HumanoidRootPart.Position
+        local targetPos = target.HumanoidRootPart.Position
+
+        localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(pos.X, pos.Y, pos.Z), Vector3.new(targetPos.X, pos.Y, targetPos.Z))
+    end
+end
+KillerMisc:AddToggle("KillerAimAssist", { 
+    Text = "Killer Aim Assist",
+    Tooltip = "helps you hit by aiming your character at the nearest survivor",
+    Callback = function()
+        while Toggles.KillerAimAssist.Value and task.wait() do
+            debugCall(pcall(function()
+                if isSurvivor then return end
+
+                local target, dist = getClosestSurvivor()
+                assist(target, dist)
+            end))
+        end
+    end
+})
+SurvivorsGroup:AddToggle("SurvivorAimAssist", { 
+    Text = "Survivor Aim Assist",
+    Tooltip = "helps you hit by aiming your character at the killer",
+    Callback = function()
+        while Toggles.SurvivorAimAssist.Value and task.wait() do
+            debugCall(pcall(function()
+                if isKiller then return end
+                if not killerModel then return end
+
+                local dist = (localPlayer.Character.HumanoidRootPart.Position - killerModel.HumanoidRootPart.Position).magnitude
+                assist(killerModel, dist)
+            end))
+        end
+    end
+})
+
 KillerMisc:AddButton({
     Text = "Fling Killer",
     Func = function()
         Notify("warning", "this feature kinda only works in some certain fake forsaken games cuz forsaken has collision stuff", 7)
+
         if isKiller then
             return Notify("Trying to fling yourself", "you're the killer buddy", 7)
         end
+
         if playingState == "Spectating" then
             return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
         end
+
         pcall(function()
             if killerModel and isSurvivor then
                 local hrp = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
                 if hrp then
                     local fail = tick()
                     local old = hrp.CFrame
+
                     for _, v in pairs(localPlayer.Character:GetChildren()) do
                         if v:IsA("BasePart") then
                             v.CanCollide = false
                         end
                     end
+
                     repeat
                         hrp.Velocity = Vector3.new(0, -10000, 0)
                         hrp.CFrame = killerModel.HumanoidRootPart.CFrame
@@ -1773,11 +1865,13 @@ KillerMisc:AddButton({
                         end
                         task.wait()
                     until tick() - fail >= 3
+
                     for _, v in pairs(localPlayer.Character:GetChildren()) do
                         if v:IsA("BasePart") then
                             v.CanCollide = true
                         end
                     end
+
                     hrp.Velocity = Vector3.zero
                     hrp.CFrame = old
                 end
@@ -1793,13 +1887,14 @@ local function getHitboxesFromPlayer()
         end
     end
 end
+
 task.spawn(function()
     while true do
         if Toggles.HitboxExpander.Value and getHitboxesFromPlayer() then
             local hrp = localPlayer.Character and localPlayer.Character.HumanoidRootPart
             if hrp then
                 local currentVelocity = hrp.Velocity
-                hrp.AssemblyLinearVelocity = hrp.CFrame.LookVector * 250
+                hrp.AssemblyLinearVelocity = hrp.CFrame.LookVector * 250 -- speedhack kick at its finest
                 game:GetService("RunService").RenderStepped:Wait()
                 hrp.Velocity = currentVelocity 
             end
@@ -1816,14 +1911,17 @@ for i = 1, 5 do
             if playingState == "Spectating" then
                 return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
             end
+
             pcall(function ()
                 if not (gameMap and gameMap.Ingame and gameMap.Ingame.Map) then return end
                 local gens = {}
+
                 for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                     if v.Name == "Generator" then
                         table.insert(gens, v)
                     end
                 end
+
                 if gens[i] and gens[i]:FindFirstChild("Positions") and gens[i].Positions:FindFirstChild("Center") then
                     localPlayer.Character.HumanoidRootPart.CFrame = gens[i].Positions.Center.CFrame + Vector3.new(0, 10, 0)
                 end
@@ -1831,6 +1929,7 @@ for i = 1, 5 do
         end
     })
 end
+
 local GensTP = Tabs.Teleport:AddRightGroupbox("Generators Walk", "pin")
 for i = 1, 5 do
     GensTP:AddButton({
@@ -1839,31 +1938,40 @@ for i = 1, 5 do
             if playingState == "Spectating" then
                 return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
             end
+
             local s, r = pcall(function ()
                 if not (gameMap and gameMap.Ingame and gameMap.Ingame.Map) then return end
                 local gens = {}
+
                 for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                     if v.Name == "Generator" then
                         table.insert(gens, v)
                     end
                 end
+
                 if gens[i] and gens[i]:FindFirstChild("Positions") and gens[i].Positions:FindFirstChild("Center") then
                     pcall(pathfindTo, gens[i].Positions.Center.Position)
                 end
             end)
-            if not s then warn("Pathfind failed", r) end
+
+            if not s then
+                warn("Pathfind failed", r)
+            end
         end
     })
 end
+
 local ItemsTP = Tabs.Teleport:AddRightGroupbox("Items", "shovel")
 ItemsTP:AddButton({
     Text = "Teleport To Random Item",
     Func = function ()
         local items = {}
+
         pcall(function ()
             if playingState == "Spectating" then
                 return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
             end
+
             if workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") then
                 for _, v in pairs(gameMap.Ingame:GetDescendants()) do
                     if v:IsA("Tool") then
@@ -1872,6 +1980,7 @@ ItemsTP:AddButton({
                 end
             end
         end)
+
         if #items > 0 and items[1]:FindFirstChild("ItemRoot") then
             localPlayer.Character.HumanoidRootPart.CFrame = items[math.random(1, #items)].ItemRoot.CFrame + Vector3.new(0, 10, 0)
         end
@@ -1882,16 +1991,18 @@ local MiscGroup = Tabs.Misc:AddLeftGroupbox("Miscallenous", "circle-question-mar
 MiscGroup:AddToggle("AllowJump", {
     Text = "Allow Jump",
     Default = false,
-    Callback = function (s)
-        _G.mhhmmm2 = s
-        if s then
+    Callback = function (state)
+        _G.AllowJump = state
+
+        if state then
             game.StarterGui:SetCore("SendNotification", { Title = "KICK WARNING", Text = "WARNING jumping repeatedly will KICK YOU because the game will think you are flying!", Duration = 9 })
         end
+
         task.spawn(function ()
-            local localPlayer = localPlayer
             while task.wait() do
-                if not _G.mhhmmm2 then break end
+                if not _G.AllowJump then break end
                 local humanoid = localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid")
+
                 if humanoid then
                     humanoid.JumpPower = 50
                 end
@@ -1899,6 +2010,7 @@ MiscGroup:AddToggle("AllowJump", {
         end)
     end
 })
+
 local function FullBright()
     game.Lighting.Brightness = 2
     game.Lighting.ClockTime = 14
@@ -1906,21 +2018,39 @@ local function FullBright()
     game.Lighting.GlobalShadows = false
     game.Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
 end
+
+local alreadyPressed = false
+local alreadyPressedFB = false
 MiscGroup:AddButton({
     Text = "No Fog",
     Func = function ()
-        for _,v in pairs(game.Lighting:GetDescendants()) do
-            if v:IsA("Atmosphere") then
-                v:Destroy()
+        if alreadyPressed then return end
+        alreadyPressed = true
+        while true do
+            for _, v in pairs(game.Lighting:GetDescendants()) do
+                if v:IsA("Atmosphere") then
+                    v:Destroy()
+                end
             end
+
+            game.Lighting.FogEnd = 999999
+            task.wait(1)
         end
-        game.Lighting.FogEnd = 999999
     end
 })
+
 MiscGroup:AddButton({
     Text = "Full Bright",
-    Func = FullBright
+    Func = function()
+        if alreadyPressedFB then return end
+        alreadyPressedFB = true
+        while true do
+            FullBright()
+            task.wait(1)
+        end
+    end
 })
+
 MiscGroup:AddButton({
     Text = "Kill Yourself",
     Func = function ()
@@ -1929,6 +2059,7 @@ MiscGroup:AddButton({
         end)
     end
 })
+
 MiscGroup:AddButton({
     Text = "Rejoin",
     Func = function ()
@@ -1937,12 +2068,14 @@ MiscGroup:AddButton({
         end)
     end
 })
+
 MiscGroup:AddToggle('IZD', {
     Text = "Infinite Zoom Distance",
     Callback = function(state)
         localPlayer.CameraMaxZoomDistance = state and math.huge or 12
     end
 })
+
 MiscGroup:AddToggle('IZD', {
     Text = "Camera Noclip",
     Callback = function(state)
@@ -2047,6 +2180,7 @@ end
 if player.Character then
     setupCharacter(player.Character)
 end
+
 player.CharacterAdded:Connect(setupCharacter)
 
 MiscGroup:AddToggle("FakeInjure", {
@@ -2073,6 +2207,7 @@ local function pressReturnButton()
         end
     end
 end
+
 MiscGroup:AddToggle("AutoLobby", {
     Text = "Auto Lobby",
     Callback = function(value)
@@ -2090,18 +2225,21 @@ pcall(function()
     else
         playingState = "Playing"
     end
+
     workspace.Players.Spectating.ChildAdded:Connect(function(v)
         if v.Name == localPlayer.Name then
             playingState = "Spectating"
             Notify("Playing state", playingState, 7)
         end
     end)
+
     workspace.Players.Spectating.ChildRemoved:Connect(function(v)
         if v.Name == localPlayer.Name then
             playingState = "Playing"
             Notify("Playing state", "In Round", 7)
         end
     end)
+
     MiscGroup:AddToggle('AlwaysShowChat', {
         Text = "Always Show Chat",
         Callback = function(state)
@@ -2124,6 +2262,7 @@ pcall(function()
     local KillerChanceText = MiscGroup:AddLabel({
         Text = "Chance to be killer: n/a%",
     })
+
     task.spawn(function()
         while true do
             KillerChanceText:SetText(string.format("Chance to be killer: %d%%", localPlayer.leaderstats.KillerChance.Value))
@@ -2131,26 +2270,22 @@ pcall(function()
         end
     end)
 
+    function panic()
+        local dontPanic = {"SpectateKiller", "FakeInjure"}
+        for i, v in pairs(Toggles) do
+            debugCall(pcall(function()
+                if table.find(dontPanic, i) and dontPanic[table.find(dontPanic, i)].Value == false then return end
+                v:SetValue(false)
+            end))
+        end
+    end
+
     MiscGroup:AddButton({
         Text = "Panic",
-        Func = function ()
-            for i, v in pairs(Toggles) do
-                pcall(function()
-                    if i == "FakeInjure" then return end
-                    v:SetValue(false)
-                end)
-            end
-        end
+        Func = panic
     })
 
-    Library:OnUnload(function()
-        for i, v in pairs(Toggles) do
-            pcall(function()
-                if i == "FakeInjure" then return end
-                v:SetValue(false)
-            end)
-        end
-    end)
+    Library:OnUnload(panic)
 end)
 
 local AntiGroup = Tabs.Anti:AddLeftGroupbox("Anti", "ban")
@@ -2162,6 +2297,7 @@ AntiGroup:AddToggle("AutoRemove1x1x1x1", {
         task.spawn(function ()
             while _G.no1x and task.wait() do
                 local temp = localPlayer.PlayerGui:FindFirstChild("TemporaryUI")
+
                 if temp and temp:FindFirstChild("1x1x1x1Popup") then
                     if firesignal then
                         firesignal(temp["1x1x1x1Popup"].MouseButton1Click)
@@ -2172,20 +2308,23 @@ AntiGroup:AddToggle("AutoRemove1x1x1x1", {
         end)
     end
 })
+
+local function removeHealthGlitch()
+    local TemporaryUI = localPlayer.PlayerGui:FindFirstChild("TemporaryUI")
+    for i, v in pairs(TemporaryUI:GetChildren()) do
+         if v.Name == "Frame" and v:FindFirstChild("Glitched") then
+            v:Destroy()
+            Notify("deleted", "deleted health glitch", 6)
+        end
+    end
+end
 AntiGroup:AddToggle("AntiHealthGlitch", {
     Text = "Anti Health Glitch",
     Default = false,
-    Callback = function (bool)
-        _G.no1x2= bool
-        task.spawn(function ()
-            while _G.no1x2 and task.wait() do
-                local temp = localPlayer.PlayerGui:FindFirstChild("TemporaryUI")
-                for i, v in pairs(temp) do
-                    if v.Name == "Frame" and v:FindFirstChild("Glitched") then
-                        v:Destroy()
-                        Notify("deleted", "deleted health glitch", 6)
-                    end
-                end
+    Callback = function()
+        task.spawn(function()
+            while Toggles.AntiHealthGlitch.Value and task.wait() do
+                removeHealthGlitch()
             end
         end)
     end
@@ -2245,6 +2384,7 @@ AntiGroup:AddToggle("AntiSubspace", {
                     "SubspaceVFXBlur",
                     "SubspaceVFXColorCorrection"
                 }
+
                 for i, v in pairs(subspace) do
                     if game.Lighting:FindFirstChild(v) then
                         game.Lighting[v]:Destroy()
@@ -2254,23 +2394,27 @@ AntiGroup:AddToggle("AntiSubspace", {
         end)
     end
 })
+
 AntiGroup:AddToggle("AntiFootsteps", {
     Text = "Anti Footsteps",
     Default = false,
 })
+
 pcall(function()
     local old; old = hookmetamethod(game, "__namecall", function (self, ...)
         local args = {...}
+
         if Toggles.AntiFootsteps.Value and args[1] == "FootstepPlayed" and type(args[2]) == "number" then
-            warn("no footstep")
             return 
         end
+
         return old(self, unpack(args))
     end)
 end)
 
 local Players = game:GetService("Players")
 local originalValues = {}
+
 local paths = {
     "HideKillerWins",
     "HidePlaytime",
@@ -2285,12 +2429,14 @@ local function saveOriginals(player)
         originalValues[player.UserId][key] = value.Value
     end
 end
+
 local function reveal(player)
     for _, key in ipairs(paths) do
         local value = player.PlayerData.Settings.Privacy:FindFirstChild(key)
         value.Value = false
     end
 end
+
 local function restore(player)
     if originalValues[player.UserId] then
         for key, val in pairs(originalValues[player.UserId]) do
@@ -2299,6 +2445,7 @@ local function restore(player)
         end
     end
 end
+
 local function hiddenStatsFunc(disable)
     for _, player in ipairs(Players:GetPlayers()) do
         if disable then
@@ -2316,11 +2463,13 @@ Players.PlayerAdded:Connect(function(player)
         reveal(player)
     end
 end)
+
 AntiGroup:AddToggle("AntiHiddenStats", {
     Text = "Anti Hidden Stats",
     Default = false,
     Tooltip = "lets you view peoples stats even if they are off",
     Callback = function(value)
+        toggleState = value
         hiddenStatsFunc(value)
     end
 })
@@ -2328,14 +2477,17 @@ AntiGroup:AddToggle("AntiHiddenStats", {
 local canDoRequire = pcall(function()
     require(game:GetService("ReplicatedStorage").Assets.Emotes.AICatDance)
 end)
+
 if canDoRequire then
     local EmoteGroup = Tabs.Misc:AddRightGroupbox("Emote As Killer", "party-popper")
     local emoteName = "AICatDance"
     local emoteTable = {}
+
     for _, v in pairs(game:GetService("ReplicatedStorage").Assets.Emotes:GetChildren()) do
         table.insert(emoteTable, require(v).DisplayName)
     end
     table.sort(emoteTable)
+
     EmoteGroup:AddDropdown("EmoteDropdown", {
         Values = emoteTable,
         Default = emoteName,
@@ -2343,16 +2495,19 @@ if canDoRequire then
         Text = "Select Emote (must own)",
         Callback = function(e) emoteName = e end
     })
+
     EmoteGroup:AddButton({
         Text = "Play Emote",
         Func = function ()
             local p
+
             for _, v in pairs(game:GetService("ReplicatedStorage").Assets.Emotes:GetChildren()) do
                 if require(v).DisplayName == emoteName then
                     p = v.Name
                     break
                 end
             end
+
             Network:WaitForChild("RemoteEvent"):FireServer("PlayEmote", "Animations", p)
         end
     });
@@ -2362,7 +2517,9 @@ local function unlock(achieve)
    local remote = Network:WaitForChild("RemoteEvent")
    remote:FireServer("UnlockAchievement", achieve)
 end
+
 local BadgeGroup = Tabs.Misc:AddRightGroupbox("Achievements", "award")
+
 BadgeGroup:AddButton({
    Text = "\".\"",
    Func = function() unlock("MeetBrandon") end,
@@ -2389,6 +2546,7 @@ BadgeGroup:AddButton({
 })
 
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu", "wrench")
+
 MenuGroup:AddToggle("KeybindMenuOpen", {
     Default = Library.KeybindFrame.Visible,
     Text = "Open Keybind Menu",
