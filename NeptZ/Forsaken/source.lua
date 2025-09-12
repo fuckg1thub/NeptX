@@ -2083,62 +2083,49 @@ MiscGroup:AddToggle('IZD', {
     end
 })
 
-Players = game:GetService("Players")
-MarketplaceService = game:GetService("MarketplaceService")
-RunService = game:GetService("RunService")
-player = Players.LocalPlayer
-
-replacementAnimations = {
+local MarketplaceService = game:GetService("MarketplaceService")
+local RunService = game:GetService("RunService")
+local replacementAnimations = {
     idle = "rbxassetid://134624270247120",
     walk = "rbxassetid://132377038617766",
     run = "rbxassetid://115946474977409"
 }
-
-animationNameCache = {}
-currentTrack = nil
-currentType = nil
-toggleEnabled = false
-
-getAnimationNameFromId = function(assetId)
+local animationNameCache = {}
+local currentTrack = nil
+local currentType = nil
+local toggleEnabled = false
+local getAnimationNameFromId = function(assetId)
     if animationNameCache[assetId] then
         return animationNameCache[assetId]
     end
-
     local success, info = pcall(function()
         return MarketplaceService:GetProductInfo(assetId)
     end)
-
     if success and info and info.Name then
         animationNameCache[assetId] = info.Name
         return info.Name
     end
-
     return nil
 end
-
-playReplacementAnimation = function(animator, animType)
+local playReplacementAnimation = function(animator, animType)
     if currentTrack then
         currentTrack:Stop()
     end
-
     local anim = Instance.new("Animation")
     anim.AnimationId = replacementAnimations[animType]
     local track = animator:LoadAnimation(anim)
     track.Priority = Enum.AnimationPriority.Movement
     track:Play()
-
     currentTrack = track
     currentType = animType
 end
-
-setupCharacter = function(char)
+local setupCharacter = function(char)
     local humanoid = char:WaitForChild("Humanoid")
     local animator = humanoid:FindFirstChildOfClass("Animator")
     if not animator then
         animator = Instance.new("Animator")
         animator.Parent = humanoid
     end
-
     RunService.Heartbeat:Connect(function()
         if toggleEnabled and currentTrack then
             if currentType == "idle" then
@@ -2150,17 +2137,14 @@ setupCharacter = function(char)
             end
         end
     end)
-
     animator.AnimationPlayed:Connect(function(track)
         if toggleEnabled then
             local animationId = track.Animation.AnimationId
             local assetId = animationId:match("%d+")
-
             if assetId then
                 local animName = getAnimationNameFromId(tonumber(assetId))
                 if animName then
                     local lowerName = animName:lower()
-
                     if lowerName:find("idle") then
                         track:Stop()
                         playReplacementAnimation(animator, "idle")
@@ -2176,12 +2160,19 @@ setupCharacter = function(char)
         end
     end)
 end
-
-if player.Character then
-    setupCharacter(player.Character)
+if localPlayer.Character then
+    setupCharacter(localPlayer.Character)
 end
-
-player.CharacterAdded:Connect(setupCharacter)
+localPlayer.CharacterAdded:Connect(setupCharacter)
+MiscGroup:AddToggle("FakeInjure", {
+    Text = "Fake Injured Animations",
+    Callback = function(value)
+        toggleEnabled = value
+        if not value and currentTrack then
+            currentTrack:Stop()
+        end
+    end
+})
 
 MiscGroup:AddToggle("FakeInjure", {
     Text = "Fake Injured Animations",
