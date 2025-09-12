@@ -1493,10 +1493,10 @@ KillerGroup:AddButton({
 KillerGroup:AddToggle('KillAll', {
     Text = "Kill All",
     Callback = function(s)
-        if playingState == "Spectating" then
+        if s and playingState == "Spectating" then
             return Notify("Must be in the round", "Cannot use this feature while spectating", 7)
         end
-        if isSurvivor then
+        if s and isSurvivor then
             return Notify("Please be killer", "To use this feature, you must be killer", 7)
         end
         if not Toggles.KillAll.Value then return end
