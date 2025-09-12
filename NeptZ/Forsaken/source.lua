@@ -20,6 +20,10 @@ local replicatedStorage = game:GetService("ReplicatedStorage")
 local Network = replicatedStorage:WaitForChild("Modules"):WaitForChild("Network")
 local gameMap = workspace.Map
 
+if not isfile("nelkaiseeer.png") then
+    writefile("nelkaiseeer.png", game:HttpGet("https://github.com/fuckg1thub/assets/raw/refs/heads/main/MuMuNxDevice_Rx6x52XbMt.png"))
+end
+
 local pathfindingIndex = 0
 local function pathfindTo(targetPos)
     local indexNow = pathfindingIndex
@@ -171,7 +175,7 @@ Toggles = Library.Toggles
 Window = Library:CreateWindow({
     Title = "NXP hub V3",
     Footer = "Forsaken | Keyless Source",
-    Icon = "rbxassetid://130931198530758",
+    Icon = getcustomasset("nelkaiseeer.png"),
     NotifySide = "Right",
     ShowCustomCursor = true,
     Size = UDim2.fromOffset(736, 370)
@@ -609,16 +613,16 @@ GeneratorsGroup:AddButton({
 
 GeneratorsGroup:AddSlider("GeneratorDelay1", {
     Text = "Puzzle Delay 1",
-    Default = 1.2,
-    Min = 1.2,
+    Default = 1.4,
+    Min = 1.4,
     Max = 16,
     Rounding = 1,
 })
 
 GeneratorsGroup:AddSlider("GeneratorDelay2", {
     Text = "Puzzle Delay 2",
-    Default = 1.2,
-    Min = 1.2,
+    Default = 1.4,
+    Min = 1.4,
     Max = 16,
     Rounding = 1,
 })
@@ -1343,7 +1347,7 @@ local yeahvariable = 0
 SpeedGroup:AddSlider("SpeedBypass", {
     Text = "Speed (Bypass)",
     Default = 16,
-    Min = 16,
+    Min = 1,
     Max = 100,
     Rounding = 0,
     Callback = function (s) yeahvariable = s end
@@ -1367,29 +1371,35 @@ SpeedGroup:AddToggle("SpeedToggle", {
 })
 
 local NoclipGroup = Tabs["Local Player"]:AddRightGroupbox("Noclip", "cuboid")
+local cachedParts = {}
+function enableNoclip()
+    if localPlayer.Character then
+        for _, v in pairs(localPlayer.Character.GetChildren(localPlayer.Character)) do
+            if v:IsA("BasePart") then
+                cachedParts[v] = v
+                v.CanCollide = false
+            end
+        end
+    end
+end
+function disableNoclip()
+    for _, v in pairs(cachedParts) do
+        v.CanCollide = true
+    end
+end
 NoclipGroup:AddToggle("EnableNoclip", {
     Text = "Enable Noclip",
     Default = false,
     Callback = function (s)
         _G.noclipState = s
-        local cachedParts = {}
         task.spawn(function ()
             while task.wait() do
                 if not _G.noclipState then
-                    for _, v in pairs(cachey) do
-                        v.CanCollide = true
-                    end
+                    disableNoclip()
                     break
                 end
 
-                if localPlayer.Character then
-                    for _, v in pairs(localPlayer.Character:GetChildren()) do
-                        if v:IsA("BasePart") then
-                            cachedParts[v] = v
-                            v.CanCollide = false
-                        end
-                    end
-                end
+                enableNoclip()
             end
         end)
     end
@@ -1491,11 +1501,7 @@ InfJumpGroup:AddToggle("Invis", {
                 while loopRunning do
                     local hum = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") and localPlayer.Character:FindFirstChild("Humanoid")
                     if hum then
-                        for _, v in pairs(localPlayer.Character:GetChildren()) do
-                            if v:IsA("BasePart") then
-                                v.CanCollide = false
-                            end
-                        end
+                        enableNoclip()
                     end
 
                     if hum then
@@ -1671,21 +1677,80 @@ KillerGroup:AddToggle('KillAll', {
                         Toggles.KillAll:SetValue(false)
                         return game.StarterGui:SetCore("SendNotification", { Title = "Kill all stopped", Text = "kill all stopped because your ping is too high. try getting better wifi and try again", Duration = 9 })
                     end
-                    if game.Players:FindFirstChild(name) == nil then  break end
-                    if plr.Character == nil then break end
-                    if plr.Character:FindFirstChild("Humanoid") == nil then Toggles.KillAll:SetValue(false) return end
-                    if plr.Character.Humanoid.Health <= 0 then  break end
-                    if not Toggles.KillAll.Value then return end
-                    if not (workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") and gameMap:FindFirstChild("Ingame"):FindFirstChild("Map")) then Toggles.KillAll:SetValue(false) end
+                    if game.Players:FindFirstChild(name) == nil then
+                        break 
+                    end
+                    if plr.Character == nil then
+                        break
+                    end
+                    if plr.Character:FindFirstChild("Humanoid") == nil then
+                        Toggles.KillAll:SetValue(false)
+                        return
+                    end
+                    if plr.Character.Humanoid.Health <= 0 then
+                        break
+                    end
+                    if not Toggles.KillAll.Value then
+                        return
+                    end
+                    if not (workspace:FindFirstChild("Map") and gameMap:FindFirstChild("Ingame") and gameMap:FindFirstChild("Ingame"):FindFirstChild("Map")) then
+                        Toggles.KillAll:SetValue(false)
+                        return
+                    end
+                    enableNoclip()
                     localPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame
-                    Network:WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "Slash")
-                    Network:WaitForChild("RemoteEvent"):FireServer("UseActorAbility", "Punch")
+                    localPlayer.Character.HumanoidRootPart.Velocity = Vector3.zero
+                    killerAttack()
                     task.wait()
                 end
             end
         end
     end
 })
+
+KillerGroup:AddToggle('VoidRushCollision', {
+    Text = "Void Rush Anti Collision"
+})
+
+KillerGroup:AddToggle('VoidRushNoclip', {
+    Text = "Void Rush Noclip"
+})
+
+pcall(function()
+    local old
+    old = hookmetamethod(game, "__namecall", function(self, ...)
+        local args = {...}
+        if type(args[1]) == "string" and string.find(args[1], localPlayer.Name) and string.find(args[1], "VoidRushCollision") then
+            if Toggles.VoidRushCollision.Value then
+                return
+            end
+        end
+        return old(self, ...)
+    end)
+end)
+task.spawn(function()
+    function isNoliVoidRush()
+        return isKiller and localPlayer.Character and localPlayer.Character.Name == "Noli" and "Dashing" == localPlayer.Character:GetAttribute("VoidRushState")
+    end
+    while true do
+        if isNoliVoidRush() and Toggles.VoidRushNoclip.Value and (not Toggles.EnableNoclip.Value) then
+            enableNoclip()
+        elseif (not isNoliVoidRush()) and (not Toggles.EnableNoclip.Value) then
+            disableNoclip()
+        end
+        task.wait()
+    end
+end)
+
+function killerAttack()
+    if hasAbilityReady("Slash") then
+        Network.RemoteEvent:FireServer("UseActorAbility", "Slash")
+    elseif hasAbilityReady("Punch") then
+        Network.RemoteEvent:FireServer("UseActorAbility", "Punch")
+    elseif hasAbilityReady("Stab") then
+        Network.RemoteEvent:FireServer("UseActorAbility", "Stab")
+    end
+end
 
 KillerMisc:AddButton({
     Text = "Walk To Random Survivor",
@@ -1755,15 +1820,13 @@ KillerMisc:AddToggle("SlashAura", {
                     if isKiller then
                         local yh = getASurvivor(Options.SlashAuraRange.Value)
                         if yh then
-                            Network.RemoteEvent:FireServer("UseActorAbility", "Slash")
-                            Network.RemoteEvent:FireServer("UseActorAbility", "Punch")
+                            killerAttack()
                         end
                     else
                         if killerModel then
                             local dist = (hrp.Position - killerModel.HumanoidRootPart.Position).magnitude
                             if dist <= Options.SlashAuraRange.Value then
-                                Network.RemoteEvent:FireServer("UseActorAbility", "Slash") -- shedleskty
-                                Network.RemoteEvent:FireServer("UseActorAbility", "Punch") -- guest 1337?
+                                killerAttack()
                             end
                         end
                     end
@@ -1845,11 +1908,7 @@ KillerMisc:AddButton({
                     local fail = tick()
                     local old = hrp.CFrame
 
-                    for _, v in pairs(localPlayer.Character:GetChildren()) do
-                        if v:IsA("BasePart") then
-                            v.CanCollide = false
-                        end
-                    end
+                    enableNoclip()
 
                     repeat
                         hrp.Velocity = Vector3.new(0, -10000, 0)
@@ -1861,11 +1920,7 @@ KillerMisc:AddButton({
                         task.wait()
                     until tick() - fail >= 3
 
-                    for _, v in pairs(localPlayer.Character:GetChildren()) do
-                        if v:IsA("BasePart") then
-                            v.CanCollide = true
-                        end
-                    end
+                    disableNoclip()
 
                     hrp.Velocity = Vector3.zero
                     hrp.CFrame = old
@@ -2159,15 +2214,6 @@ if localPlayer.Character then
     setupCharacter(localPlayer.Character)
 end
 localPlayer.CharacterAdded:Connect(setupCharacter)
-MiscGroup:AddToggle("FakeInjure", {
-    Text = "Fake Injured Animations",
-    Callback = function(value)
-        toggleEnabled = value
-        if not value and currentTrack then
-            currentTrack:Stop()
-        end
-    end
-})
 
 MiscGroup:AddToggle("FakeInjure", {
     Text = "Fake Injured Animations",
