@@ -1,4 +1,3 @@
--- finally fucking hitbox expander is fixed
 -- NXP Hub forsaken source code, do not copy any of the code in here please, its my work and you dont have permission to use it.
 
 -- Added some extra features and fixed some bugs
@@ -1620,10 +1619,6 @@ KillerMisc:AddSlider("SlashAuraRange", {
 KillerMisc:AddToggle("HitboxExpander", { 
     Text = "Reach Expander",
     Default = false,
-    Callback = function(v)
-        if not v then return end
-        Notify("Buggy Feature", "this feature is really buggy and idk why but if you execute the script twice it works but u get kicked sometimes", 7)
-    end
 })
 
 KillerMisc:AddButton({
