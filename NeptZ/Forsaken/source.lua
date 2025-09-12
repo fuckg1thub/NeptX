@@ -1697,6 +1697,10 @@ KillerGroup:AddToggle('KillAll', {
                         Toggles.KillAll:SetValue(false)
                         return
                     end
+                    if playingState == "Spectating" then
+                        Toggles.KillAll:SetValue(false)
+                        return
+                    end
                     enableNoclip()
                     localPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame
                     localPlayer.Character.HumanoidRootPart.Velocity = Vector3.zero
@@ -2303,10 +2307,9 @@ pcall(function()
     end)
 
     function panic()
-        local dontPanic = {"SpectateKiller", "FakeInjure"}
         for i, v in pairs(Toggles) do
             debugCall(pcall(function()
-                if table.find(dontPanic, i) and dontPanic[table.find(dontPanic, i)].Value == false then return end
+                if v.Value == false then return end
                 v:SetValue(false)
             end))
         end
