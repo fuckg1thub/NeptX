@@ -1,3 +1,4 @@
+-- any script i posted saying this script supports executors like xeno/solara are updated, dont dislike the post and just remind me to update it
 pcall(function()
     for i, v in pairs({"xeno", "solara", "celery", "nezur", "luna"}) do
         if string.find(identifyexecutor():lower(), v) then
@@ -5,10 +6,6 @@ pcall(function()
         end
     end
 end)
-
--- Dont steal code from this
--- Added some extra features and fixed some bugs
--- Updated version to V3 (why did we go from V1 to V2 to V.2 to V3?)
 
 local function debugCall(suc, res)
     if (not suc) and (res ~= nil) then
