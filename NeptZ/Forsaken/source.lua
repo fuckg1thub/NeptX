@@ -1,15 +1,18 @@
---[[
-    READ BEFORE GETTING ANY IDEAS!
-      >>>>> Do not copy any of the code in here please!
-      **its my work and you dont have permission to use it**
-]]
+pcall(function()
+    for i, v in pairs({"xeno", "solara", "celery", "nezur", "luna"}) do
+        if string.find(identifyexecutor():lower(), v) then
+            game.Players.LocalPlayer:Kick("Please dont try to run NXP Hub on your executor ever again. [" .. identifyexecutor() .. "]\nhttps://getswift.vip")
+        end
+    end
+end)
 
+-- Dont steal code from this
 -- Added some extra features and fixed some bugs
 -- Updated version to V3 (why did we go from V1 to V2 to V.2 to V3?)
 
 local function debugCall(suc, res)
     if (not suc) and (res ~= nil) then
-        warn("[DEBUG] " .. res)
+        --warn("[DEBUG] " .. res)
     end
 end
 
@@ -477,7 +480,7 @@ GeneratorsGroup:AddToggle("AutoStartGenerator", {
                         for _, v in pairs(gameMap.Ingame.Map:GetChildren()) do
                             if v.Name == "Generator" then
                                 pcall(function()
-                                    local function continue()
+                                    local function nextStep()
                                         if localPlayer.PlayerGui:FindFirstChild("PuzzleUI") then return end
                                         if activelyAutoing then return end
 
@@ -495,11 +498,11 @@ GeneratorsGroup:AddToggle("AutoStartGenerator", {
 
                                     local pos = localPlayer.Character.HumanoidRootPart.Position
                                     if (pos - hello).Magnitude <= 4 then
-                                        continue()
+                                        nextStep()
                                     elseif (pos - hello2).Magnitude <= 4 then
-                                        continue()
+                                        nextStep()
                                     elseif (pos - hello3).Magnitude <= 4 then
-                                        continue()
+                                        nextStep()
                                     end
                                 end)
                             end
