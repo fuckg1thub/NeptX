@@ -1,3 +1,4 @@
+-- Read before you do anything with this code: https://github.com/fuckg1thub/NeptX?tab=GPL-2.0-1-ov-file
 -- any script i posted saying this script supports executors like xeno/solara are updated, dont dislike the post and just remind me to update it
 pcall(function()
     for i, v in pairs({"xeno", "solara", "celery", "nezur", "luna"}) do
