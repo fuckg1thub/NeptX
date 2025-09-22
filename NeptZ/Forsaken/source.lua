@@ -345,6 +345,16 @@ Window = Library:CreateWindow({
     Size = UDim2.fromOffset(736, 370)
 })
 
+local Discord = Window:AddTab("DISCORD", "external-link", "Our discord server: https://discord.gg/B8RmDbnrWc")
+local A = Discord:AddLeftGroupbox("Discord", "external-link")
+A:AddButton({
+    Text = "Copy Discord",
+    Func = function()
+        setclipboard("https://discord.gg/B8RmDbnrWc")
+        Notify("Copied", "Discord invite copied! please join", 9)
+    end
+})
+
 local Tabs = {
     Main = Window:AddTab("Main", "zap"),
     ESP = Window:AddTab("Visuals", "eye"),
