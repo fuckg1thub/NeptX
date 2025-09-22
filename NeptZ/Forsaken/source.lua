@@ -1,5 +1,5 @@
 -- LICENSE: https://github.com/fuckg1thub/NeptX/blob/main/LICENSE (In summary, if you're going to skid, dont put a key, claim it as yours, and then obfuscate it (must be open src))
--- any script i posted saying this script supports executors like xeno/solara are updated, dont dislike the post and just remind me to update it
+-- any script i posted saying this script supports executors like xeno/solara are outdated, dont dislike the post and just remind me to update it
 pcall(function()
     for i, v in pairs({"xeno", "solara", "celery", "nezur", "luna"}) do
         if string.find(identifyexecutor():lower(), v) then
