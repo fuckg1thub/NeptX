@@ -11,9 +11,18 @@ local forsaken_games = {
   136474108446847; -- forsaken modded
 }
 if not table.find(forsaken_games, game.PlaceId) then
-  kick("supported games: \"Forsaken\", \"For the saken\"")
+  kick("unsupported game")
   return
 end
+
+pcall(function()
+    for i, v in pairs({"xeno", "solara", "celery", "nezur", "luna"}) do
+        if string.find(identifyexecutor():lower(), v) then
+            kick("your executor [" .. identifyexecutor() .. "] is not able to run this script")
+            return
+        end
+    end
+end)
 
 local blacklists = game:GetService("HttpService"):JSONDecode(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/NeptX/refs/heads/main/NeptZ/Forsaken/black.json"))
 for name, data in pairs(blacklists) do
