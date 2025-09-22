@@ -8,15 +8,18 @@ local forsaken_games = {
   100039707794702; -- untitled forsaken engine
   18687417158; -- forsaken original
   76797953666623; -- for the saken
+  136474108446847; -- forsaken modded
 }
 if not table.find(forsaken_games, game.PlaceId) then
   kick("supported games: \"Forsaken\", \"For the saken\"")
+  return
 end
 
 local blacklists = game:GetService("HttpService"):JSONDecode(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/NeptX/refs/heads/main/NeptZ/Forsaken/black.json"))
 for name, data in pairs(blacklists) do
   if name == lplr.Name then
     kick("blacklisted from nxp hub, reason: " .. (data.reason or "no reason listed"))
+    return
   end
 end
 
@@ -25,6 +28,7 @@ local suc = pcall(function()
   local load = loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/NeptX/refs/heads/main/NeptZ/Forsaken/main.lua"))
   if load == nil then
     kick("parsing error in code (this shouldnt ever happen, try re-executing)")
+    return
   else
     load()
   end
@@ -32,4 +36,5 @@ end)
 
 if suc == false then
   kick("error while running script. are you in the correct forsaken game?")
+  return
 end
