@@ -16,7 +16,7 @@ end
 local blacklists = game:GetService("HttpService"):JSONDecode(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/NeptX/refs/heads/main/NeptZ/Forsaken/black.json"))
 for name, data in pairs(blacklists) do
   if name == lplr.Name then
-    --kick("blacklisted from nxp hub, reason: " .. (data.reason or "no reason listed"))
+    kick("blacklisted from nxp hub, reason: " .. (data.reason or "no reason listed"))
   end
 end
 
