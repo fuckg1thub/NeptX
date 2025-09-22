@@ -337,7 +337,7 @@ Options = Library.Options
 Toggles = Library.Toggles
 
 Window = Library:CreateWindow({
-    Title = "NXP hub V3",
+    Title = "NXP hub V3.1",
     Footer = "Forsaken | Source",
     Icon = "rbxassetid://130931198530758",
     NotifySide = "Right",
