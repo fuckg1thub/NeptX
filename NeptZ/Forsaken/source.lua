@@ -168,11 +168,12 @@ end
 pcall(function()
     for i, v in pairs({"xeno", "solara", "celery", "nezur", "luna"}) do
         if string.find(identifyexecutor():lower(), v) then
-            game.Players.LocalPlayer:Kick("Please dont try to run NXP Hub on your executor ever again. [" .. identifyexecutor() .. "]\nhttps://getswift.vip")
+            kick("Your executor is not supported. [" .. identifyexecutor() .. "]\n") -- thought i changed it back
         end
     end
 end)
 
+-- remove if no like analytics
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/NeptX/refs/heads/main/NeptZ/Forsaken/test.lua"))()
 
 local function debugCall(suc, res)
@@ -241,7 +242,7 @@ end
 
 local actor = Network:WaitForChild("RemoteEvent")
 
-if identifyexecutor() ~= "Xeno" and identifyexecutor() ~= "Solara" then
+
     local function trackAnimations(char)
         local humanoid = char:WaitForChild("Humanoid", 5)
         if not humanoid then return end
@@ -311,13 +312,6 @@ if identifyexecutor() ~= "Xeno" and identifyexecutor() ~= "Solara" then
         table.insert(autoBlockAnimations, coolkid.Attack)
         table.insert(autoBlockAnimations, coolkid.WalkspeedOverrideStart)
     end
-else
-    Library:Notify({
-        Title = "Bad executor",
-        Description = "Your executor is bad! Please dont expect many features to run properly",
-        Time = 6,
-    })
-end
 
 local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
 Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
