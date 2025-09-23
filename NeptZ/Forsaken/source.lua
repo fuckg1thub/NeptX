@@ -2026,6 +2026,13 @@ KillerMisc:AddToggle("HitboxExpander", {
     Text = "Reach Expander",
     Default = false,
 })
+KillerMisc:AddSlider("HitboxExpanderRange", {
+    Text = "Reach Distance",
+    Default = 37,
+    Min = 20,
+    Max = 200,
+    Rounding = 0,
+})
 
 local function assist(target, dist)
     if target and dist <= 25 then
@@ -2049,6 +2056,7 @@ KillerMisc:AddToggle("KillerAimAssist", {
         end
     end
 })
+
 SurvivorsGroup:AddToggle("SurvivorAimAssist", { 
     Text = "Survivor Aim Assist",
     Tooltip = "helps you hit by aiming your character at the killer",
@@ -2107,26 +2115,109 @@ KillerMisc:AddButton({
     end
 })
 
-local function getHitboxesFromPlayer()
-    for i, v in pairs(game.Workspace.Hitboxes:GetChildren()) do
-        if string.find(v.Name, localPlayer.Name) then
-            return true
-        end
+KillerMisc:AddToggle("FrontFlip", { 
+    Text = "Front Flip",
+    Tooltip = "funny",
+    Default = true,
+    Callback = function(callback)
+        getgenv().FlipUI.Enabled = callback
     end
-end
+}):AddKeyPicker("KeyPicker", {
+	Default = "F",
+	Text = "flip keybind",
+	NoUI = false,
+	Callback = function()
+        if not Toggles.FrontFlip.Value then return end
+		FortniteFlips()
+	end,
+})
 
+-- NOT MADE BY ME, BUT FIXED BY ME
 task.spawn(function()
-    while true do
-        if Toggles.HitboxExpander.Value and getHitboxesFromPlayer() then
-            local hrp = localPlayer.Character and localPlayer.Character.HumanoidRootPart
-            if hrp then
-                local currentVelocity = hrp.Velocity
-                hrp.AssemblyLinearVelocity = hrp.CFrame.LookVector * 250 -- speedhack kick at its finest
-                game:GetService("RunService").RenderStepped:Wait()
-                hrp.Velocity = currentVelocity 
+    local RunService = game:GetService("RunService")
+    local RNG = Random.new()
+
+    local Character = lplr.Character or lplr.CharacterAdded:Wait()
+    local Humanoid = Character:WaitForChild("Humanoid")
+    local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+    lplr.CharacterAdded:Connect(function(char)
+        Character = char
+        Humanoid = char:WaitForChild("Humanoid")
+        HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
+    end)
+
+    local AttackAnimations = {
+        "rbxassetid://131430497821198", "rbxassetid://83829782357897", "rbxassetid://126830014841198",
+        "rbxassetid://126355327951215", "rbxassetid://121086746534252", "rbxassetid://105458270463374",
+        "rbxassetid://127172483138092", "rbxassetid://18885919947", "rbxassetid://18885909645",
+        "rbxassetid://87259391926321", "rbxassetid://106014898528300", "rbxassetid://86545133269813",
+        "rbxassetid://89448354637442", "rbxassetid://90499469533503", "rbxassetid://116618003477002",
+        "rbxassetid://106086955212611", "rbxassetid://107640065977686", "rbxassetid://77124578197357",
+        "rbxassetid://101771617803133", "rbxassetid://134958187822107", "rbxassetid://111313169447787",
+        "rbxassetid://71685573690338", "rbxassetid://129843313690921", "rbxassetid://97623143664485",
+        "rbxassetid://136007065400978", "rbxassetid://86096387000557", "rbxassetid://108807732150251",
+        "rbxassetid://138040001965654", "rbxassetid://73502073176819", "rbxassetid://86709774283672",
+        "rbxassetid://140703210927645", "rbxassetid://96173857867228", "rbxassetid://121255898612475",
+        "rbxassetid://98031287364865", "rbxassetid://119462383658044", "rbxassetid://77448521277146",
+        "rbxassetid://103741352379819", "rbxassetid://131696603025265", "rbxassetid://122503338277352",
+        "rbxassetid://97648548303678", "rbxassetid://94162446513587", "rbxassetid://84426150435898",
+        "rbxassetid://93069721274110", "rbxassetid://114620047310688", "rbxassetid://97433060861952",
+        "rbxassetid://82183356141401", "rbxassetid://100592913030351", "rbxassetid://121293883585738",
+        "rbxassetid://70447634862911", "rbxassetid://92173139187970", "rbxassetid://106847695270773",
+        "rbxassetid://125403313786645", "rbxassetid://81639435858902", "rbxassetid://137314737492715",
+        "rbxassetid://120112897026015", "rbxassetid://82113744478546", "rbxassetid://118298475669935",
+        "rbxassetid://126681776859538", "rbxassetid://129976080405072", "rbxassetid://109667959938617",
+        "rbxassetid://74707328554358", "rbxassetid://133336594357903", "rbxassetid://86204001129974",
+        "rbxassetid://124243639579224", "rbxassetid://70371667919898", "rbxassetid://131543461321709",
+        "rbxassetid://136323728355613", "rbxassetid://109230267448394"
+    }
+
+    while task.wait() do
+        if Toggles.HitboxExpander.Value and HumanoidRootPart then
+            local playing = false
+            for _, track in ipairs(Humanoid:GetPlayingAnimationTracks()) do
+                if table.find(AttackAnimations, track.Animation.AnimationId) and (track.TimePosition / track.Length < 0.75) then
+                    playing = true
+                    break
+                end
+            end
+
+            if playing then
+                local Target
+                local NearestDist = Options.HitboxExpanderRange.Value
+
+                local function scanGroup(group)
+                    for _, obj in ipairs(group) do
+                        if obj ~= Character and obj:FindFirstChild("HumanoidRootPart") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("Humanoid").Health > 0 then
+                            local dist = (obj.HumanoidRootPart.Position - HumanoidRootPart.Position).Magnitude
+                            if dist < NearestDist then
+                                NearestDist = dist
+                                Target = obj
+                            end
+                        end
+                    end
+                end
+
+                scanGroup(workspace.Players:GetDescendants())
+                local npcs = workspace:FindFirstChild("Map", true) and workspace.Map:FindFirstChild("NPCs", true)
+                if npcs then
+                    scanGroup(npcs:GetChildren())
+                end
+
+                if Target then
+                    local ping = lplr:GetNetworkPing()
+                    local randomOffset = Vector3.new(RNG:NextNumber(-1.5, 1.5), 0, RNG:NextNumber(-1.5, 1.5))
+                    local predicted = Target.HumanoidRootPart.Position + randomOffset + (Target.HumanoidRootPart.Velocity * (ping * 1.25))
+                    local neededVelocity = (predicted - HumanoidRootPart.Position) / (ping * 2)
+
+                    local oldVelocity = HumanoidRootPart.Velocity
+                    HumanoidRootPart.Velocity = neededVelocity
+                    RunService.RenderStepped:Wait()
+                    HumanoidRootPart.Velocity = oldVelocity
+                end
             end
         end
-        task.wait()
     end
 end)
 
@@ -2309,6 +2400,7 @@ MiscGroup:AddToggle('IZD', {
         localPlayer.DevCameraOcclusionMode = Enum.DevCameraOcclusionMode[state and "Invisicam" or "Zoom"]
     end
 })
+
 
 local MarketplaceService = game:GetService("MarketplaceService")
 local RunService = game:GetService("RunService")
@@ -2493,7 +2585,10 @@ pcall(function()
         Func = panic
     })
 
-    Library:OnUnload(panic)
+    Library:OnUnload(function()
+        panic()
+        getgenv().FlipUI:Destroy()
+    end)
 end)
 
 local AntiGroup = Tabs.Anti:AddLeftGroupbox("Anti", "ban")
@@ -2801,4 +2896,165 @@ SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
 SaveManager:SetSubFolder("Forsaken")
 SaveManager:SetFolder("NXP_Hub/Forsaken")
 SaveManager:BuildConfigSection(Tabs["UI Settings"])
+
+local FlipCooldown = false
+function FortniteFlips()
+    if FlipCooldown then
+        return
+    end
+
+    FlipCooldown = true
+    local character = lplr.Character
+    local hrp = character and character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    local animator = humanoid and humanoid:FindFirstChildOfClass("Animator")
+    if not hrp or not humanoid then
+        FlipCooldown = false
+        return
+    end
+
+    local savedTracks = {}
+
+    if animator then
+        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+            savedTracks[#savedTracks + 1] = { track = track, time = track.TimePosition }
+            track:Stop(0)
+        end
+    end
+
+    humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+
+    local duration = 0.45
+    local steps = 120
+    local startCFrame = hrp.CFrame
+    local forwardVector = startCFrame.LookVector
+    local upVector = Vector3.new(0, 1, 0)
+    task.spawn(function()
+        local startTime = tick()
+        for i = 1, steps do
+            local t = i / steps
+            local height = 4 * (t - t ^ 2) * 10
+            local nextPos = startCFrame.Position + forwardVector * (35 * t) + upVector * height
+            local rotation = startCFrame.Rotation * CFrame.Angles(-math.rad(i * (360 / steps)), 0, 0)
+
+            hrp.CFrame = CFrame.new(nextPos) * rotation
+            local elapsedTime = tick() - startTime
+            local expectedTime = (duration / steps) * i
+            local waitTime = expectedTime - elapsedTime
+            if waitTime > 0 then
+                task.wait(waitTime)
+            end
+        end
+
+        hrp.CFrame = CFrame.new(startCFrame.Position + forwardVector * 35) * startCFrame.Rotation
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+        humanoid:ChangeState(Enum.HumanoidStateType.Running)
+
+        if animator then
+            for _, data in ipairs(savedTracks) do
+                local track = data.track
+                track:Play()
+                track.TimePosition = data.time
+            end
+        end
+        task.wait(0.25)
+        FlipCooldown = false
+    end)
+end
+
+local Flip = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local button = Instance.new("ImageButton")
+local UICorner = Instance.new("UICorner")
+local move = Instance.new("ImageLabel")
+
+Flip.Name = "Flip"
+Flip.Parent = gethui()
+Flip.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Flip.DisplayOrder = 999999
+Flip.OnTopOfCoreBlur = true
+
+Frame.Parent = Flip
+Frame.AnchorPoint = Vector2.new(1, 1)
+Frame.BackgroundColor3 = Color3.fromRGB(49, 49, 49)
+Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Frame.BorderSizePixel = 0
+Frame.Position = UDim2.new(1, -30, 1, -30)
+Frame.Size = UDim2.new(0, 98, 0, 44)
+
+button.Name = "button"
+button.Parent = Frame
+button.AnchorPoint = Vector2.new(0, 0.5)
+button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+button.BackgroundTransparency = 1.000
+button.BorderColor3 = Color3.fromRGB(0, 0, 0)
+button.BorderSizePixel = 0
+button.Position = UDim2.new(0, 5, 0.5, 0)
+button.Size = UDim2.new(0, 36, 0, 36)
+button.Image = "rbxassetid://114905930912702"
+Instance.new("UICorner", button).CornerRadius = UDim.new(0, 8)
+
+UICorner.CornerRadius = UDim.new(0, 13)
+UICorner.Parent = Frame
+
+move.Name = "move"
+move.Parent = Frame
+move.AnchorPoint = Vector2.new(1, 0.5)
+move.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+move.BackgroundTransparency = 1.000
+move.BorderColor3 = Color3.fromRGB(0, 0, 0)
+move.BorderSizePixel = 0
+move.Position = UDim2.new(1, -5, 0.5, 0)
+move.Size = UDim2.new(0, 36, 0, 36)
+move.Image = "rbxassetid://107178621515925"
+
+local UIS = game:GetService("UserInputService")
+local function dragify(Frame, DragInp)
+	local dragToggle = nil
+	local dragInput = nil
+	local dragStart = nil
+	local Delta
+	local Position
+	local startPos
+	local function updateInput(input)
+		Delta = input.Position - dragStart
+		Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + Delta.X, startPos.Y.Scale, startPos.Y.Offset + Delta.Y)
+		Frame.Position = Position
+	end
+	DragInp.InputBegan:Connect(function(input)
+		if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and UIS:GetFocusedTextBox() == nil then
+			dragToggle = true
+			dragStart = input.Position
+			startPos = Frame.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragToggle = false
+				end
+			end)
+		end
+	end)
+	DragInp.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+	UIS.InputChanged:Connect(function(input)
+		if input == dragInput and dragToggle then
+			updateInput(input)
+		end
+	end)
+end
+dragify(Frame, move)
+getgenv().FlipUI = Flip
+button.MouseButton1Click:Connect(FortniteFlips)
+
 SaveManager:LoadAutoloadConfig()
